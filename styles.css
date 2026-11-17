@@ -163,17 +163,37 @@ section, footer { scroll-margin-top: 1rem; }
   border-bottom-left-radius: 39%;
   border-top-left-radius: 65%;
 }
-.pitch-point {
+.pitch-caption {
   position: absolute;
-  width: clamp(8px, 1.2vw, 14px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  translate: -50% -50%;
-  background: var(--gold);
-  box-shadow: 0 0 0 5px #f3cb6640;
+  top: 3%;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
 }
-.pitch-point-start { left: 78%; top: 72%; }
-.pitch-point-end { left: 78%; top: 25%; }
+.pitch-link {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: .3rem .65rem;
+  border: 1px solid var(--gold);
+  border-radius: 99px;
+  translate: -50% -50%;
+  color: var(--ink);
+  background: var(--gold);
+  font-size: clamp(.73rem, 1.3vw, .9rem);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.pitch-link:hover, .pitch-link:focus-visible { background: var(--paper); }
+.pitch-link:focus-visible { outline-color: var(--paper); }
+.pitch-link-summit { left: 72%; top: 25%; }
+.pitch-link-hyrox { left: 28%; top: 50%; }
+.pitch-link-nj { left: 72%; top: 75%; }
+.work-list details:target { box-shadow: inset 3px 0 var(--burgundy); }
 
 .work { padding-block: clamp(3rem, 7vw, 6rem); }
 .section-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .85rem 1.5rem; margin-bottom: 1.4rem; }
