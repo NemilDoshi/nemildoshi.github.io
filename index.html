@@ -7,8 +7,8 @@
   <meta name="description" content="Nemil Doshi’s portfolio of event operations and finance experience.">
   <meta name="theme-color" content="#671e2c">
   <title>Nemil Doshi · Portfolio</title>
-  <link rel="stylesheet" href="./styles.css?v=2">
-  <script src="./site.js?v=2" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=3">
+  <script src="./site.js?v=3" defer></script>
 </head>
 <body id="top">
   <a class="skip" href="#work">Skip to work</a>
@@ -29,23 +29,39 @@
           <p class="intro">Finance graduate studying Sports Management &amp; Gaming at Masters’ Union, with hands-on experience at live events.</p>
           <a class="button button-gold" href="#work">Explore my work <span aria-hidden="true">↓</span></a>
         </div>
-        <nav class="poster" aria-label="Explore selected work on the field">
+        <section class="poster" id="field-game" aria-labelledby="field-title">
           <div class="poster-inner">
-            <span class="poster-cross cross-tl" aria-hidden="true">+</span><span class="poster-cross cross-tr" aria-hidden="true">+</span>
-            <p class="pitch-caption">Pick a project</p>
-            <div class="pitch">
-              <div class="pitch-half"></div>
-              <div class="pitch-center"></div>
-              <div class="pitch-box pitch-box-top"></div>
-              <div class="pitch-box pitch-box-bottom"></div>
-              <div class="pitch-route"></div>
-              <a class="pitch-link pitch-link-summit" href="#retail-summit">Retail Summit</a>
-              <a class="pitch-link pitch-link-hyrox" href="#hyrox">HYROX Delhi</a>
-              <a class="pitch-link pitch-link-nj" href="#nj-group">NJ Group</a>
+            <h2 class="pitch-caption" id="field-title">Play the field</h2>
+            <p class="game-help" id="game-help">Use arrow keys or tap the controls. Reach each marker to unlock a project.</p>
+            <div class="pitch" tabindex="0" role="group" aria-label="Playing field" aria-describedby="game-help">
+              <div class="pitch-half" aria-hidden="true"></div>
+              <div class="pitch-center" aria-hidden="true"></div>
+              <div class="pitch-box pitch-box-top" aria-hidden="true"></div>
+              <div class="pitch-box pitch-box-bottom" aria-hidden="true"></div>
+              <div class="game-stop" data-column="3" data-row="0">
+                <span class="game-locked">Retail Summit</span>
+                <a class="pitch-link" href="#retail-summit" hidden>Retail Summit</a>
+              </div>
+              <div class="game-stop" data-column="1" data-row="2">
+                <span class="game-locked">HYROX Delhi</span>
+                <a class="pitch-link" href="#hyrox" hidden>HYROX Delhi</a>
+              </div>
+              <div class="game-stop" data-column="3" data-row="4">
+                <span class="game-locked">NJ Group</span>
+                <a class="pitch-link" href="#nj-group" hidden>NJ Group</a>
+              </div>
+              <span class="game-player" aria-hidden="true">ND</span>
             </div>
-            <span class="poster-cross cross-bl" aria-hidden="true">+</span><span class="poster-cross cross-br" aria-hidden="true">+</span>
+            <p class="game-status" role="status">0 of 3 projects unlocked</p>
+            <div class="game-controls" role="group" aria-label="Move player">
+              <button type="button" data-move="ArrowLeft" aria-label="Move left">←</button>
+              <button type="button" data-move="ArrowUp" aria-label="Move up">↑</button>
+              <button type="button" data-move="ArrowDown" aria-label="Move down">↓</button>
+              <button type="button" data-move="ArrowRight" aria-label="Move right">→</button>
+              <button type="button" class="game-reset">Restart game</button>
+            </div>
           </div>
-        </nav>
+        </section>
       </section>
     </div>
 
