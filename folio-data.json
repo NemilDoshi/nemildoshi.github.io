@@ -1,0 +1,42 @@
+{
+  "projects": [
+    {
+      "slug": "retail-summit",
+      "short": "Retail Leadership Summit",
+      "org": "Retailers Association of India",
+      "role": "Registration desk",
+      "type": "Event operations",
+      "year": "2026",
+      "abbr": "RAI",
+      "color": "#d9a441",
+      "result": "I helped check in attendees, answered queries, and coordinated with the registration team at Jio World Convention Centre in Mumbai.",
+      "url": "https://storai.rai.net.in/storai-magazine-edition/gold-rush"
+    },
+    {
+      "slug": "hyrox",
+      "short": "HYROX Delhi",
+      "org": "Masters’ Union HYROX Delhi",
+      "role": "Volunteer",
+      "type": "Sports events",
+      "year": "2026",
+      "abbr": "HY",
+      "color": "#a35bb6",
+      "result": "I volunteered at Masters’ Union HYROX Delhi while studying Sports Management & Gaming.",
+      "url": "https://support.hyrox.com/?country=IN&event=delhi__24._jul._-_26._jul._2026&hasEvents=1"
+    },
+    {
+      "slug": "nj-group",
+      "short": "NJ Group",
+      "org": "NJ Group",
+      "role": "Intern",
+      "type": "Finance",
+      "year": "",
+      "abbr": "NJ",
+      "color": "#4183c6",
+      "result": "I interned with NJ Group in Mumbai.",
+      "url": "https://www.linkedin.com/in/nemil-doshi-08b6272b7/"
+    }
+  ],
+  "linkedin": "https://www.linkedin.com/in/nemil-doshi-08b6272b7/",
+  "bio": "I studied finance at Somaiya Vidyavihar University and now study Sports Management & Gaming at Masters’ Union."
+}
