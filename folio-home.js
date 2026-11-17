@@ -2,6 +2,27 @@ import { startEye, tileHTML } from './folio-eye.js';
 import { cover, esc, mark, projects, D } from './folio-content.js?v=6';
 const $ = id => document.getElementById(id);
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const stadium = $('stadium-intro');
+if (!reduce) {
+  const stage = stadium.querySelector('.stadium-stage');
+  let pending = false;
+  function renderAscent() {
+    pending = false;
+    const bounds = stadium.getBoundingClientRect();
+    const travel = bounds.height - stage.offsetHeight;
+    const progress = travel > 0 ? Math.max(0, Math.min(1, -bounds.top / travel)) : 0;
+    stage.style.setProperty('--ascent', progress.toFixed(3));
+  }
+  function queueAscent() {
+    if (pending) return;
+    pending = true;
+    requestAnimationFrame(renderAscent);
+  }
+  renderAscent();
+  addEventListener('scroll', queueAscent, { passive: true });
+  addEventListener('resize', queueAscent);
+}
 /* ---------- grain texture, drawn once ---------- */
 (() => {
   const c = document.createElement('canvas'); c.width = c.height = 180;
