@@ -33,7 +33,22 @@ blockquote{margin:16px 0 4px;font-size:17.5px}
 <body>
 <main>
 <p class="top"><a href="index.html">Back to the site</a><a href="https://www.linkedin.com/in/nemil-doshi-08b6272b7/">LinkedIn</a></p>
-<h1>Nemil Doshi</h1><p>I studied finance at Somaiya Vidyavihar University and now study Sports Management &amp; Gaming at Masters’ Union. I’m based in Gurugram, India.</p>
-<h2>Selected work</h2><h3><a href="project.html?p=retail-summit">Retail Leadership Summit</a></h3><p class="meta">Event operations · Registration desk</p><p>I helped check in attendees, answered queries, and coordinated with the registration team at Jio World Convention Centre in Mumbai.</p><h3><a href="project.html?p=hyrox">HYROX Delhi</a></h3><p class="meta">Sports events · Volunteer</p><p>I volunteered at Masters’ Union HYROX Delhi while studying Sports Management &amp; Gaming.</p><h3><a href="project.html?p=nj-group">NJ Group</a></h3><p class="meta">Finance · Intern</p><p>I interned with NJ Group in Mumbai.</p>
-<h2>Training</h2><p>Financial modeling, Power BI, and business analytics with Excel.</p>
-</main></body></html>
+<h1>Nemil Doshi</h1>
+<div id="profile"><p>Loading portfolio…</p></div>
+</main>
+<script type="module">
+import { D, esc, projects } from './folio-content.js?v=6';
+const list = items => `<ul>${items.map(item => `<li>${esc(item)}</li>`).join('')}</ul>`;
+document.getElementById('profile').innerHTML = `
+  <p>${esc(D.bio)} I’m based in Gurugram, India.</p>
+  <h2>Selected work</h2>
+  ${projects.map(p => `<h3><a href="project.html?p=${p.slug}">${esc(p.short)}</a></h3>
+    <p class="meta">${[p.type, p.role, p.year].filter(Boolean).map(esc).join(' · ')}</p>
+    <p>${esc(p.result)}</p>${p.highlights ? list(p.highlights) : ''}`).join('')}
+  <h2>Education</h2>${list(D.education.map(entry => entry.join(' · ')))}
+  <h2>Skills</h2>${list(D.skills)}
+  <h2>Certifications</h2>${list(D.certifications.map(entry => entry.join(' · ')))}
+  <h2>Leadership and achievements</h2>
+  ${D.achievements.map(([title, detail]) => `<h3>${esc(title)}</h3><p>${esc(detail)}</p>`).join('')}`;
+</script>
+</body></html>

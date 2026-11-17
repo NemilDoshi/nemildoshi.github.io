@@ -1,5 +1,5 @@
 import { startEye, tileHTML } from './folio-eye.js';
-import { cover, esc, mark, projects, D } from './folio-content.js';
+import { cover, esc, mark, projects, D } from './folio-content.js?v=6';
 const $ = id => document.getElementById(id);
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* ---------- grain texture, drawn once ---------- */
@@ -19,8 +19,8 @@ if (!reduce && !location.hash) openCurtain();
 
 $('headline').textContent = 'Finance graduate studying Sports Management & Gaming.';
 $('avail').textContent = 'Masters’ Union · Gurugram, India';
-$('heroFacts').innerHTML = '<li><b>Sports</b><span>HYROX Delhi volunteer</span></li><li><b>Events</b><span>Retail Leadership Summit registration</span></li><li><b>Finance</b><span>NJ Group internship</span></li>';
-const S = { dive: [['Finance', 'Somaiya Vidyavihar University'], ['Event operations', 'Retail Leadership Summit'], ['Sports management', 'Masters’ Union and HYROX Delhi']] };
+$('heroFacts').innerHTML = '<li><b>300+</b><span>daily cafeteria customers</span></li><li><b>10%</b><span>of qualified prospects converted at NJ E-Wealth</span></li><li><b>300</b><span>participants in my research study</span></li>';
+const S = { dive: [['Entrepreneurship', 'Co-founded and operated a college cafeteria'], ['Business development', 'Investment client outreach at NJ E-Wealth'], ['Quantitative research', 'Survey research and ANOVA']] };
 $('dive').classList.add('dark-scene');
 let rings = '';
 for (let r = 300, i = 0; r > 40; r -= 13, i++) rings += `<circle r="${r}" fill="${i % 2 ? '#5c2b3d' : '#542636'}" stroke="#2d1520" stroke-width="${i % 3 ? 1.5 : 3}"/>`;
@@ -33,7 +33,7 @@ const rnd = (i) => ((Math.sin(i * 91.7) + 1) / 2);
 $('hiWord').innerHTML = word.split(' ').map((w, wi) => `<span class="w" aria-hidden="true">${[...w].map((ch, i) => `<span class="ch" style="--r:${((rnd(i + wi * 7) - .5) * 12).toFixed(1)}deg;--y:${((rnd(i * 3 + wi) - .5) * 18).toFixed(0)}px">${esc(ch)}</span>`).join('')}</span>`).join(' ');
 
 $('intro').textContent = D.bio;
-$('now').textContent = 'My experience spans event registration, sports volunteering, and a finance internship.';
+$('now').textContent = 'I’ve also worked at live events, from summit registration to sports volunteering.';
 $('where').textContent = 'Gurugram, India';
 const touch = !matchMedia('(hover: hover) and (pointer: fine)').matches;
 $('dealHint').textContent = touch ? 'Tap a project to preview it.' : 'Hover over a project to preview it, or open the write-up.';
@@ -62,12 +62,14 @@ rows.forEach((row, i) => {
     rows.forEach(other => other.classList.toggle('on', other === row));
   });
 });
-$('quota').innerHTML = '<h3>Education</h3><p>BBA, Finance · Somaiya Vidyavihar University</p><p>PGP, Sports Management &amp; Gaming · Masters’ Union</p>';
-$('exp').innerHTML = projects.map(p => `<div class="job"><span class="lg" style="background:${p.color}">${tileHTML(mark(p), true)}</span><div><b>${esc(p.role)}</b><span class="m">${esc(p.org)}</span></div></div>`).join('');
-$('skills').innerHTML = ['Financial modeling', 'Power BI', 'Business analytics with Excel', 'Event registration'].map(name => `<span>${name}</span>`).join('');
+$('quota').innerHTML = '<h3>Education</h3>' + D.education.map(([degree, school, dates]) => `<p><b>${esc(degree)}</b><br>${esc(school)} · ${esc(dates)}</p>`).join('');
+$('exp').innerHTML = ['college-cafeteria', 'nj-group', 'retail-summit', 'hyrox'].map(slug => projects.find(p => p.slug === slug)).map(p => `<div class="job"><span class="lg" style="background:${p.color}">${tileHTML(mark(p), true)}</span><div><b>${esc(p.role)}</b><span class="m">${esc(p.org)} · ${esc(p.year)}</span></div></div>`).join('');
+$('skills').innerHTML = D.skills.map(name => `<span>${esc(name)}</span>`).join('');
+$('wins').innerHTML = D.achievements.map(([title, detail]) => `<article class="win"><h3>${esc(title)}</h3><p>${esc(detail)}</p></article>`).join('');
 const journey = [
-  { year: 'Finance', title: 'Somaiya Vidyavihar University', detail: 'Studied finance for my BBA.' },
-  { year: 'Internship', title: 'NJ Group', detail: 'Interned in Mumbai.' },
+  { year: 'Finance', title: 'Shantilal K. Somaiya', detail: 'Studied finance for my BBA.' },
+  { year: 'Operations', title: 'N.L. College Cafeteria', detail: 'Co-founded and ran a college cafeteria.' },
+  { year: 'Business development', title: 'NJ E-Wealth', detail: 'Worked with prospective investment clients in Mumbai.' },
   { year: 'Sports', title: 'Masters’ Union', detail: 'Studying Sports Management & Gaming.' },
   { year: 'Live events', title: 'HYROX Delhi', detail: 'Volunteered at the event.' },
 ];

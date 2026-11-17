@@ -1,6 +1,65 @@
 {
   "projects": [
     {
+      "slug": "college-cafeteria",
+      "short": "N.L. College Cafeteria",
+      "org": "N.L. College",
+      "role": "Co-Founder",
+      "type": "Entrepreneurship & operations",
+      "year": "Sept 2023–Feb 2024",
+      "abbr": "NL",
+      "color": "#de7a3e",
+      "result": "I co-founded and operated a college cafeteria serving 300+ customers daily and generating about ₹1 lakh in monthly revenue.",
+      "highlights": [
+        "Managed day-to-day operations and achieved about a 60% profit margin.",
+        "Forecast demand and coordinated procurement across vendors, keeping inventory waste near zero."
+      ]
+    },
+    {
+      "slug": "nj-group",
+      "short": "NJ E-Wealth",
+      "org": "NJ E-Wealth",
+      "role": "Business Development Executive",
+      "type": "Business development",
+      "year": "May–July 2025",
+      "abbr": "NJ",
+      "color": "#4183c6",
+      "result": "I spoke with 200+ prospective clients and converted 10% of qualified prospects into active investment clients.",
+      "url": "https://www.linkedin.com/in/nemil-doshi-08b6272b7/",
+      "highlights": [
+        "Assessed investment needs through conversations with prospective clients.",
+        "Used targeted outreach and personalized follow-up to convert qualified prospects."
+      ]
+    },
+    {
+      "slug": "household-research",
+      "short": "Household environment and child development",
+      "org": "Independent research project",
+      "role": "Author",
+      "type": "Quantitative research",
+      "abbr": "RE",
+      "color": "#27957d",
+      "result": "I studied household factors that influence child development using responses from 300 participants.",
+      "highlights": [
+        "Used analysis of variance (ANOVA) to examine the survey findings.",
+        "Reviewed 20 studies to put the primary research in context."
+      ]
+    },
+    {
+      "slug": "falcon-labs",
+      "short": "Falcon Labs case study",
+      "org": "Falcon Labs case study",
+      "role": "Case study",
+      "type": "Go-to-market strategy",
+      "abbr": "FL",
+      "color": "#cf9a25",
+      "result": "I assessed enterprise sales opportunities across three target accounts in three industries.",
+      "highlights": [
+        "Synthesized findings from seven public data sources.",
+        "Identified nine or more operational pain points to inform the go-to-market strategy."
+      ]
+    },
+    {
       "slug": "retail-summit",
       "short": "Retail Leadership Summit",
       "org": "Retailers Association of India",
@@ -23,20 +82,73 @@
       "color": "#a35bb6",
       "result": "I volunteered at Masters’ Union HYROX Delhi while studying Sports Management & Gaming.",
       "url": "https://support.hyrox.com/?country=IN&event=delhi__24._jul._-_26._jul._2026&hasEvents=1"
-    },
-    {
-      "slug": "nj-group",
-      "short": "NJ Group",
-      "org": "NJ Group",
-      "role": "Intern",
-      "type": "Finance",
-      "year": "",
-      "abbr": "NJ",
-      "color": "#4183c6",
-      "result": "I interned with NJ Group in Mumbai.",
-      "url": "https://www.linkedin.com/in/nemil-doshi-08b6272b7/"
     }
   ],
   "linkedin": "https://www.linkedin.com/in/nemil-doshi-08b6272b7/",
-  "bio": "I studied finance at Somaiya Vidyavihar University and now study Sports Management & Gaming at Masters’ Union."
+  "bio": "I’m a finance graduate pursuing a PGP in Sports Management & Gaming at Masters’ Union. I’ve run a college cafeteria, worked in investment client development, and conducted quantitative research. I’m interested in business strategy, operations, and founder’s office roles.",
+  "education": [
+    [
+      "PGP, Sports Management & Gaming",
+      "Masters’ Union",
+      "2026–present"
+    ],
+    [
+      "BBA, Finance",
+      "Shantilal K. Somaiya",
+      "2023–2026 · CGPA 8.12/10 · Business Club member"
+    ]
+  ],
+  "skills": [
+    "Business development",
+    "Operations management",
+    "Market research",
+    "Financial modeling",
+    "Excel pivot tables, advanced functions and dashboards",
+    "PowerPoint",
+    "Canva"
+  ],
+  "certifications": [
+    [
+      "Master Accounting Fundamentals",
+      "EDUCBA"
+    ],
+    [
+      "Master Excel Advanced Functions and Analytics",
+      "EDUCBA"
+    ],
+    [
+      "AI with Excel",
+      "Coursera"
+    ],
+    [
+      "AI for Everyone",
+      "DeepLearning.AI"
+    ],
+    [
+      "Master Microsoft Excel: Apply, Analyze & Visualize Data",
+      "EDUCBA"
+    ],
+    [
+      "Business Analytics using Excel",
+      "Simplilearn"
+    ],
+    [
+      "Diploma in Digital Marketing",
+      "Raj Computers Academy"
+    ]
+  ],
+  "achievements": [
+    [
+      "AURA 2025",
+      "Organized the Somaiya Vidyavihar event, coordinated 600+ attendees, and organized 5+ competitions."
+    ],
+    [
+      "Interhostel Cricket Tournament",
+      "Won the Mumbai tournament in 2025, which drew 10 teams and 100+ participants."
+    ],
+    [
+      "Kho-Kho team captain",
+      "Led a 10-player team to an inter-school win and finished runner-up at district level."
+    ]
+  ]
 }
