@@ -538,22 +538,6 @@ html.touch-eye .eye .tag{display:none}
     radial-gradient(ellipse at 50% 15%, #fffbea 0 .35%, #ddf9ff65 1%, transparent 14%);
   mix-blend-mode: screen;
 }
-.stadium-pitch {
-  position: absolute;
-  inset: 49% 20% -32%;
-  transform: perspective(470px) rotateX(42deg);
-  transform-origin: center top;
-  background: repeating-linear-gradient(90deg, #34704b 0 10%, #28623f 10% 20%);
-  box-shadow: 0 0 0 7px #193c31, 0 0 55px #76d58b50;
-}
-.stadium-pitch::before, .stadium-pitch::after, .stadium-pitch i {
-  content: '';
-  position: absolute;
-  border: 2px solid #e7f7d9bd;
-}
-.stadium-pitch::before { inset: 5%; }
-.stadium-pitch::after { inset: 48% 5% auto; border-width: 1px 0 0; }
-.stadium-pitch i { left: 50%; top: 48%; width: 17%; aspect-ratio: 1; border-radius: 50%; translate: -50% -50%; }
 .stadium-tunnel {
   transform: translateY(calc(var(--ascent) * 105%)) scale(calc(1 + var(--ascent) * .72));
   transform-origin: center 55%;
@@ -627,4 +611,72 @@ html.touch-eye .eye .tag{display:none}
 }
 @media (max-width: 620px) and (prefers-reduced-motion: reduce) {
   .stadium-intro { height: auto; }
+}
+
+.stadium-stage .poster {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: min(90%, 590px);
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  color: var(--cream);
+  transform: translate(-50%, -50%) translateY(calc(30svh * (1 - var(--ascent))))
+    perspective(750px) rotateX(calc(43deg * (1 - var(--ascent)))) scale(calc(.76 + .24 * var(--ascent)));
+}
+.stadium-stage .poster-inner { padding: 0; gap: clamp(4px, 1.1svh, 10px); }
+.stadium-stage .pitch-caption,
+.stadium-stage .game-help,
+.stadium-stage .game-status,
+.stadium-stage .game-controls,
+.stadium-stage .game-stop,
+.stadium-stage .game-player {
+  opacity: clamp(0, calc((var(--ascent) - .48) * 2.5), 1);
+}
+.stadium-stage .pitch-caption,
+.stadium-stage .game-help,
+.stadium-stage .game-status { text-shadow: 0 1px 5px #080d14, 0 0 8px #080d14; }
+.stadium-stage .game-status { min-height: 1.5em; }
+.stadium-stage .pitch {
+  height: clamp(142px, 36svh, 270px);
+  border: 2px solid #dfecd6b0;
+  border-radius: 46% / 36%;
+  background: repeating-linear-gradient(90deg, #34704b 0 10%, #28623f 10% 20%);
+  box-shadow: 0 0 0 7px #193c31, 0 0 48px #76d58b50;
+}
+.cricket-wicket {
+  position: absolute;
+  inset: 17% 42%;
+  border: 1px solid #f5e2ae;
+  border-radius: 3px;
+  background:
+    linear-gradient(0deg, transparent 12%, #fff5d9 12% 14%, transparent 14% 86%, #fff5d9 86% 88%, transparent 88%),
+    repeating-linear-gradient(90deg, #bda06c 0 6px, #b29768 6px 12px);
+  pointer-events: none;
+}
+.stadium-tunnel { z-index: 2; pointer-events: none; }
+.stadium-title, .stadium-access { z-index: 3; }
+.stadium-stage::after { z-index: 0; }
+.stadium-access { bottom: max(calc(var(--frame) + 7px), env(safe-area-inset-bottom)); }
+.stadium-scroll, .stadium-progress { opacity: clamp(0, calc(1.8 - var(--ascent) * 2.5), 1); }
+.hero-body { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "left facts"; }
+.hero-left { grid-area: left; }
+.hero-facts { grid-area: facts; }
+@media (max-width: 700px) {
+  .hero-body { grid-template-columns: 1fr; grid-template-areas: "left" "facts"; }
+}
+@media (max-height: 560px) {
+  .stadium-stage .pitch { height: clamp(105px, 34svh, 175px); }
+  .stadium-stage .pitch-caption { font-size: 1.6rem; }
+  .stadium-stage .game-help { font-size: .74rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stadium-stage { --ascent: 1; height: 100svh; }
+  .stadium-tunnel, .stadium-title { display: none; }
 }
