@@ -1,5 +1,4 @@
-import { tileHTML } from './folio-eye.js';
-import { projects, mark, esc } from './folio-content.js?v=6';
+import { projects, esc } from './folio-content.js?v=6';
 const slug = new URLSearchParams(location.search).get('p');
 const index = projects.findIndex(p => p.slug === slug);
 const main = document.getElementById('main');
@@ -9,7 +8,7 @@ if (index < 0) {
   const p = projects[index];
   document.title = `${p.short} · Nemil Doshi`;
   main.style.setProperty('--bg', p.color);
-  main.innerHTML = `<article class="sheet"><header class="ph"><div class="ph-mark" style="background:${p.color}">${tileHTML(mark(p))}</div>
+  main.innerHTML = `<article class="sheet"><header class="ph"><div class="ph-mark" aria-hidden="true" style="background:${p.color};display:grid;place-items:center;font:900 48px/1 var(--f-cut)">${esc(p.abbr)}</div>
     <div><p class="kicker">${esc(p.type)}</p><h1 class="cut">${esc(p.short)}</h1><p class="lede">${esc(p.org)}</p></div></header>
     <section class="sec"><h2>${esc(p.role)}</h2>
     ${p.year ? `<p>${esc(p.year)}</p>` : ''}

@@ -603,3 +603,34 @@ html.touch-eye .eye .tag{display:none}
   .journey .car::before, .journey .car::after, .journey .track { display: none; }
   .journey .sticky { grid-template-rows: auto auto; gap: 24px; }
 }
+@media (max-width: 700px) {
+  html { scroll-behavior: auto; }
+  html.has-eye, html.has-eye * { cursor: auto !important; }
+  .eye { display: none !important; }
+  .grain { animation: none; }
+  .hi .cut { white-space: normal; font-size: clamp(42px, 15vw, 80px); }
+  .hi .cut .w { display: inline-block; }
+  .hi .cut .ch { transform: none; }
+  .journey .sticky { min-width: 0; }
+  .journey .based { width: 100%; max-width: 100%; padding-inline: var(--pad); }
+  .journey .rail { width: 100%; min-width: 0; overflow: clip; }
+  .journey .train { width: 100%; grid-template-columns: minmax(0, 1fr); }
+  .journey .car, .journey .win { min-width: 0; }
+  .journey .car .yr { font-size: 32px; overflow-wrap: anywhere; }
+  .row .txt, .job > div, .hero-body > * { min-width: 0; overflow-wrap: anywhere; }
+  .row.on .more { grid-template-columns: minmax(0, 1fr); }
+  .row .more .pill { max-width: 100%; white-space: normal; }
+  .hero-facts { padding-bottom: 32px; }
+  .hero .kicker { line-height: 1.4; }
+  .dive .rings { transform: none !important; }
+  .me, .menu-btn { min-height: 44px; }
+  @supports (animation-timeline: view()) {
+    .deals-head, .record > h2, .wins > h2, .concept > div,
+    .hi-grid > *, .ledger > .row, .record-grid > *, .record-low > *,
+    #wins > .win, .contact-in { animation-name: mobile-content-arrives; }
+    @keyframes mobile-content-arrives {
+      from { opacity: .65; }
+      to { opacity: 1; }
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import { startEye, tileHTML } from './folio-eye.js';
+import { startEye, tileHTML } from './folio-eye.js?v=13';
 import { cover, esc, mark, projects, D } from './folio-content.js?v=6';
 const $ = id => document.getElementById(id);
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -18,7 +18,7 @@ if (!reduce) {
     const bounds = stadium.getBoundingClientRect();
     const travel = bounds.height - stage.offsetHeight;
     const progress = travel > 0 ? clampProgress(-bounds.top / travel) : 0;
-    const heroTop = hero.getBoundingClientRect().top / innerHeight;
+    const heroTop = hero.getBoundingClientRect().top / stage.offsetHeight;
     stage.style.setProperty('--ascent', progress.toFixed(3));
     stage.style.setProperty('--tunnel-fade', fadeProgress((progress - .44) / .56).toFixed(3));
     hero.style.setProperty('--name-reveal', fadeProgress((.94 - heroTop) / .60).toFixed(3));

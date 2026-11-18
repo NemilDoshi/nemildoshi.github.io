@@ -37,7 +37,7 @@ export function tagHTML(t) {
 /* ---------- controller ---------- */
 export function startEye({ marks, start, ring = 'SCROLL', onLook } = {}) {
   const eye = document.getElementById('eye');
-  if (!eye || reduce) return null;
+  if (!eye || reduce || matchMedia('(max-width: 700px)').matches) return null;
   const root = document.documentElement;
   const touchMode = !fine;
   root.classList.add(touchMode ? 'touch-eye' : 'has-eye');
