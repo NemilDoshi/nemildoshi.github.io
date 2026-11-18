@@ -9,7 +9,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%23f4ecdc' stroke='%23141210' stroke-width='5'/%3E%3Crect x='28' y='18' width='8' height='28' rx='4' fill='%23141210'/%3E%3C/svg%3E">
 <link rel="preload" href="big-shoulders-display.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="poiret-one.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="styles.css?v=13">
+<link rel="stylesheet" href="styles.css?v=14">
 </head>
 <body class="home">
 <a class="skip" href="#deals">Skip to selected work</a>
@@ -25,7 +25,7 @@
 <header class="bar" id="bar">
   <a class="me" href="#top">Nemil Doshi</a>
   <nav class="nav" id="nav" aria-label="Sections">
-    <a href="#deals">Work</a><a href="#record">Record</a><a href="#journey">Journey</a><a href="#contact">Contact</a><a class="all" href="all.html">Read it all</a>
+    <a href="#about">About</a><a href="#deals">Work</a><a href="#record">Background</a><a href="#contact">Contact</a><a class="all" href="all.html">Read it all</a>
   </nav>
   <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="nav">Menu</button>
 </header>
@@ -74,28 +74,17 @@
         </p>
       </div>
       
-      <ul class="hero-facts" id="heroFacts"></ul>
     </div>
     <p class="cue" aria-hidden="true">Scroll</p>
   </section>
 
-  <!-- 2. dive into the eye -->
-  <section class="scene dive pin" id="dive" style="--bg:var(--plum);--section-from:var(--brick)" aria-label="Finance, events and sports management">
-    <div class="sticky">
-      <svg class="rings" id="rings" viewBox="-300 -300 600 600" aria-hidden="true"></svg>
-      <ol class="dive-lines" id="diveLines"></ol>
-    </div>
-  </section>
-
   <!-- 3. hi -->
-  <section class="scene hi" id="about" style="--bg:var(--violet);--section-from:var(--plum)">
-    <h2 class="cut" id="hiWord" aria-label="Hi, I'm Nemil"></h2>
+  <section class="scene hi" id="about" style="--bg:var(--violet);--section-from:var(--brick)">
+    <h2 class="cut" id="hiWord" aria-label="My focus"></h2>
     <div class="hi-grid">
       <div class="window tilt-l monogram" aria-hidden="true">ND</div>
       <div class="hi-text">
         <p class="lede" id="intro"></p>
-        <p id="now"></p>
-        <p class="small" id="where"></p>
         
       </div>
     </div>
@@ -115,28 +104,16 @@
 
   <!-- 5. record -->
   <section class="scene record" id="record" style="--bg:var(--cobalt);--section-from:var(--grass)">
-    <h2 class="cut small-cut">The record</h2>
+    <h2 class="cut small-cut">Background</h2>
     <div class="record-grid">
       <div class="quota card-ink" id="quota"></div>
-      <div class="exp" id="exp"></div>
-    </div>
-    <div class="record-low">
-      
-      <div><h3 class="lbl">Skills</h3><div class="skills" id="skills"></div></div>
-      
+      <div class="background-skills"><h3 class="lbl">Skills</h3><div class="skills" id="skills"></div>
+        <details class="training"><summary>Certifications <span>(7)</span></summary><ul class="certs" id="certs"></ul></details>
+      </div>
     </div>
   </section>
 
-  <!-- 6. journey train -->
-  <section class="scene journey pin" id="journey" style="--bg:var(--teal);--section-from:var(--cobalt)">
-    <div class="sticky">
-      <h2 class="cut small-cut based">My journey</h2>
-      <div class="rail" id="rail" data-qa-scroll><div class="train" id="train"></div></div>
-      <div class="track" aria-hidden="true"></div>
-    </div>
-  </section>
-
-<section class="scene wins" style="--bg:var(--orange);--section-from:var(--teal)" aria-labelledby="wins-title">
+<section class="scene wins" style="--bg:var(--orange);--section-from:var(--cobalt)" aria-labelledby="wins-title">
   <h2 class="cut small-cut" id="wins-title">Leadership &amp; achievements</h2>
   <div class="win-grid" id="wins"></div>
 </section>
@@ -182,7 +159,7 @@
   <div class="tag" id="tag"></div>
 </div>
 
-<script type="module" src="folio-home.js?v=13"></script>
+<script type="module" src="folio-home.js?v=14"></script>
 <script src="site.js?v=9" defer></script>
 </body>
 </html>

@@ -634,3 +634,21 @@ html.touch-eye .eye .tag{display:none}
     }
   }
 }
+
+/* Each detail has one home: introduction, work, background, achievements. */
+.home .hero-body { grid-template-columns: minmax(0, 1fr); grid-template-areas: "left"; max-width: 760px; margin-inline: auto; }
+.home .hero-left { text-align: center; padding-bottom: 70px; }
+.home .hero-cta { justify-content: center; }
+.home .hi-grid { align-items: center; }
+.home .hi .window { aspect-ratio: 1; }
+.background-skills { min-width: 0; }
+.background-skills .lbl { margin-top: 0; }
+.training { margin-top: 30px; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); }
+.training summary { padding: 16px 0; cursor: pointer; font-weight: 700; min-height: 48px; }
+.training summary span { font-weight: 400; }
+.training .certs { padding: 4px 0 22px; gap: 16px; overflow-wrap: anywhere; }
+.training summary:focus-visible { outline: 3px solid var(--cream); outline-offset: 4px; }
+@media (max-width: 700px) {
+  .home .hi .window { width: min(230px, 100%); justify-self: center; }
+  .home .hero-left { padding-bottom: 44px; }
+}
