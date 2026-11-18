@@ -524,7 +524,21 @@ html.touch-eye .eye .tag{display:none}
 
 
 .stadium-tunnel { z-index: 2; pointer-events: none; }
+.stadium-fade {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: var(--brick);
+  opacity: var(--tunnel-fade, 0);
+  pointer-events: none;
+}
 .stadium-title, .stadium-access { z-index: 3; }
+.stadium-access a {
+  display: inline-block;
+  padding: .3em .65em;
+  border-radius: .3em;
+  background: #080d14e6;
+}
 .stadium-stage::after { z-index: 0; }
 .stadium-scroll, .stadium-progress { opacity: clamp(0, calc(1.8 - var(--ascent) * 1.8), 1); }
 .hero-body { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "left facts"; }
@@ -547,4 +561,7 @@ html.touch-eye .eye .tag{display:none}
 }
 @media (max-width: 700px) {
   .hero-body { grid-template-columns: 1fr; grid-template-areas: "left" "facts"; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stadium-fade { opacity: 1; background: linear-gradient(transparent 48%, var(--brick)); }
 }

@@ -20,6 +20,7 @@ if (!reduce) {
     const progress = travel > 0 ? clampProgress(-bounds.top / travel) : 0;
     const heroTop = hero.getBoundingClientRect().top / innerHeight;
     stage.style.setProperty('--ascent', progress.toFixed(3));
+    stage.style.setProperty('--tunnel-fade', fadeProgress((progress - .44) / .56).toFixed(3));
     hero.style.setProperty('--name-reveal', fadeProgress((.94 - heroTop) / .60).toFixed(3));
     hero.style.setProperty('--intro-reveal', fadeProgress((.78 - heroTop) / .62).toFixed(3));
   }
