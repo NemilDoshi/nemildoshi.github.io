@@ -369,100 +369,12 @@ html.touch-eye .eye .tag{display:none}
 :root { --gold: #f3cb66; --paper: var(--cream); --burgundy: #671e2c; --line: #b8af9c; }
 .hero-body { margin-top: 8px; align-items: center; }
 .who { align-self: center; }
-.poster { max-width: 420px; margin-inline: auto; padding: 8px; border: 3px solid var(--ink); border-radius: 16px; background: #293f33; color: var(--paper); box-shadow: 5px 6px 0 var(--ink); }
-.poster-inner { display: grid; gap: 8px; padding: clamp(8px, 2vw, 17px); }
-.poster h2, .poster p { margin: 0; }
-.poster .pitch-caption { font-family: "Big Shoulders", sans-serif; text-transform: uppercase; }
 .monogram, .project-cover { display: grid; place-items: center; color: var(--ink); background: var(--cover, #d9a441); font: 900 clamp(64px, 16vw, 170px)/1 "Big Shoulders", sans-serif; min-height: 180px; }
 .project-cover { min-height: 130px; font-size: clamp(54px, 10vw, 110px); }
 .concept { max-width: 620px; }
 .concept h2 { font: 900 clamp(42px, 8vw, 90px)/.9 "Big Shoulders", sans-serif; text-transform: uppercase; }
 .checklist { background: var(--paper); color: var(--ink); margin-top: 18px; }
 .checklist button { color: inherit; }
-@media (prefers-reduced-motion: no-preference) { .game-player { transition: left .12s ease-out, top .12s ease-out, translate .12s ease-out; } }
-.pitch {
-  position: relative;
-  height: clamp(190px, 24vw, 280px);
-  border: 1px solid #f4eddda8;
-  background: repeating-linear-gradient(0deg, #f4eddd0d 0 12.5%, transparent 12.5% 25%);
-}
-.pitch-half { position: absolute; top: 50%; width: 100%; border-top: 1px solid #f4eddda8; }
-.pitch-center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 37%;
-  aspect-ratio: 1;
-  border: 1px solid #f4eddda8;
-  border-radius: 50%;
-  translate: -50% -50%;
-}
-.pitch-box { position: absolute; left: 23%; width: 54%; height: 17%; border: 1px solid #f4eddda8; }
-.pitch-box-top { top: -1px; }
-.pitch-box-bottom { bottom: -1px; }
-.pitch-caption {
-  font-size: 2.15rem;
-  line-height: 1;
-}
-.game-help, .game-status { font-size: .81rem; color: var(--paper); }
-.game-status { min-height: 2.5em; }
-.game-stop, .game-player {
-  position: absolute;
-  left: calc(18% + var(--column, 2) * 16%);
-  top: calc(14% + var(--row, 2) * 18%);
-  translate: -50% -50%;
-}
-.game-stop[data-column="1"] { --column: 1; }
-.game-stop[data-column="3"] { --column: 3; }
-.game-stop[data-row="0"] { --row: 0; }
-.game-stop[data-row="4"] { --row: 4; }
-.game-locked, .poster .pitch-link {
-  display: block;
-  padding: .25rem .45rem;
-  border: 1px solid var(--gold);
-  border-radius: 99px;
-  font-size: .73rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.game-locked { background: #25372d; }
-.poster .pitch-link { color: var(--ink); background: var(--gold); text-decoration: underline; }
-.game-locked[hidden], .poster .pitch-link[hidden] { display: none; }
-.poster .pitch-link:hover, .poster .pitch-link:focus-visible { background: var(--paper); }
-.game-player {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border: 2px solid var(--paper);
-  border-radius: 50%;
-  background: var(--burgundy);
-  color: var(--paper);
-  font-size: .65rem;
-  font-weight: 800;
-  pointer-events: none;
-}
-.game-player.on-marker { translate: -50% -115%; }
-.game-controls { display: flex; flex-wrap: wrap; gap: .35rem; }
-.game-controls button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
-  padding: .25rem .55rem;
-  border: 1px solid var(--gold);
-  border-radius: .4rem;
-  background: #25372d;
-  color: var(--gold);
-  cursor: pointer;
-  touch-action: manipulation;
-}
-.game-controls button:hover, .game-controls button:active {
-  color: var(--ink);
-  background: var(--gold);
-}
-.game-controls .game-reset { margin-left: auto; font-size: .76rem; }
 .checklist { border: 1px solid var(--line); border-radius: .5rem; padding: 1.25rem; }
 .checklist fieldset { min-inline-size: 0; margin: 0; padding: 0; border: 0; }
 .checklist legend { padding: 0 0 .75rem; font-weight: 700; }
@@ -480,13 +392,10 @@ html.touch-eye .eye .tag{display:none}
 .checklist-footer button { background: none; color: inherit; border: 0; text-decoration: underline; cursor: pointer; }
 
 
-@media (max-width: 700px) {
-  .hero-body { grid-template-areas: "left" "who" "facts"; }
-  .poster .pitch { height: 190px; }
-}
+
 .home { overflow-x: clip; }
 .stadium-intro {
-  height: 205svh;
+  height: 175svh;
   background: #080d14;
   color: var(--cream);
 }
@@ -605,7 +514,7 @@ html.touch-eye .eye .tag{display:none}
   .stadium-scroll, .stadium-progress { display: none; }
 }
 @media (max-width: 620px) {
-  .stadium-intro { height: 175svh; }
+  .stadium-intro { height: 152svh; }
   .stadium-title { top: 28%; }
   .stadium-bowl { inset-inline: -36%; }
 }
@@ -613,70 +522,14 @@ html.touch-eye .eye .tag{display:none}
   .stadium-intro { height: auto; }
 }
 
-.stadium-stage .poster {
-  position: absolute;
-  z-index: 1;
-  top: 50%;
-  left: 50%;
-  width: min(90%, 590px);
-  max-width: none;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  background: transparent;
-  color: var(--cream);
-  transform: translate(-50%, -50%) translateY(calc(30svh * (1 - var(--ascent))))
-    perspective(750px) rotateX(calc(43deg * (1 - var(--ascent)))) scale(calc(.76 + .24 * var(--ascent)));
-}
-.stadium-stage .poster-inner { padding: 0; gap: clamp(4px, 1.1svh, 10px); }
-.stadium-stage .pitch-caption,
-.stadium-stage .game-help,
-.stadium-stage .game-status,
-.stadium-stage .game-controls,
-.stadium-stage .game-stop,
-.stadium-stage .game-player {
-  opacity: clamp(0, calc((var(--ascent) - .48) * 2.5), 1);
-}
-.stadium-stage .pitch-caption,
-.stadium-stage .game-help,
-.stadium-stage .game-status { text-shadow: 0 1px 5px #080d14, 0 0 8px #080d14; }
-.stadium-stage .game-status { min-height: 1.5em; }
-.stadium-stage .pitch {
-  height: clamp(142px, 36svh, 270px);
-  border: 2px solid #dfecd6b0;
-  border-radius: 46% / 36%;
-  background: repeating-linear-gradient(90deg, #34704b 0 10%, #28623f 10% 20%);
-  box-shadow: 0 0 0 7px #193c31, 0 0 48px #76d58b50;
-}
-.cricket-wicket {
-  position: absolute;
-  inset: 17% 42%;
-  border: 1px solid #f5e2ae;
-  border-radius: 3px;
-  background:
-    linear-gradient(0deg, transparent 12%, #fff5d9 12% 14%, transparent 14% 86%, #fff5d9 86% 88%, transparent 88%),
-    repeating-linear-gradient(90deg, #bda06c 0 6px, #b29768 6px 12px);
-  pointer-events: none;
-}
+
 .stadium-tunnel { z-index: 2; pointer-events: none; }
 .stadium-title, .stadium-access { z-index: 3; }
 .stadium-stage::after { z-index: 0; }
-.stadium-access { bottom: max(calc(var(--frame) + 7px), env(safe-area-inset-bottom)); }
-.stadium-scroll, .stadium-progress { opacity: clamp(0, calc(1.8 - var(--ascent) * 2.5), 1); }
+.stadium-scroll, .stadium-progress { opacity: clamp(0, calc(1.8 - var(--ascent) * 1.8), 1); }
 .hero-body { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "left facts"; }
 .hero-left { grid-area: left; }
 .hero-facts { grid-area: facts; }
 @media (max-width: 700px) {
   .hero-body { grid-template-columns: 1fr; grid-template-areas: "left" "facts"; }
-}
-@media (max-height: 560px) {
-  .stadium-stage .pitch { height: clamp(105px, 34svh, 175px); }
-  .stadium-stage .pitch-caption { font-size: 1.6rem; }
-  .stadium-stage .game-help { font-size: .74rem; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .stadium-stage { --ascent: 1; height: 100svh; }
-  .stadium-tunnel, .stadium-title { display: none; }
 }

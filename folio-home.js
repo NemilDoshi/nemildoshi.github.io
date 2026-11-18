@@ -6,34 +6,22 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const stadium = $('stadium-intro');
 if (!reduce) {
   const stage = stadium.querySelector('.stadium-stage');
-  const cricketGame = $('field-game');
   let pending = false;
   function renderAscent() {
     pending = false;
     const bounds = stadium.getBoundingClientRect();
     const travel = bounds.height - stage.offsetHeight;
-    // Leave a stretch of pinned scrolling after the reveal so visitors can stop and play.
-    const progress = travel > 0 ? Math.max(0, Math.min(1, -bounds.top / (travel * .72))) : 0;
+    const progress = travel > 0 ? Math.max(0, Math.min(1, -bounds.top / travel)) : 0;
     stage.style.setProperty('--ascent', progress.toFixed(3));
-    cricketGame.inert = progress < .88;
   }
   function queueAscent() {
     if (pending) return;
     pending = true;
     requestAnimationFrame(renderAscent);
   }
-  function landOnField() {
-    if (location.hash !== '#field-game') return;
-    const start = stadium.getBoundingClientRect().top + scrollY;
-    const travel = stadium.offsetHeight - stage.offsetHeight;
-    scrollTo({ top: start + Math.ceil(travel * .72), behavior: 'instant' });
-    renderAscent();
-  }
   renderAscent();
-  if (location.hash === '#field-game') requestAnimationFrame(landOnField);
   addEventListener('scroll', queueAscent, { passive: true });
   addEventListener('resize', queueAscent);
-  addEventListener('hashchange', landOnField);
 }
 /* ---------- grain texture, drawn once ---------- */
 (() => {
@@ -131,7 +119,7 @@ startEye({
     return p ? { mark: mark(p), tag: { name: p.short, rows: [['Role', p.role], ['Area', p.type]] } } : null;
   },
   start: () => {
-    const rect = $('field-game').getBoundingClientRect();
+    const rect = $('hero').querySelector('.name').getBoundingClientRect();
     return { x: rect.right + scrollX, y: rect.top + scrollY };
   },
 });
