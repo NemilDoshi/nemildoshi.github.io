@@ -530,6 +530,21 @@ html.touch-eye .eye .tag{display:none}
 .hero-body { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "left facts"; }
 .hero-left { grid-area: left; }
 .hero-facts { grid-area: facts; }
+@media (prefers-reduced-motion: no-preference) {
+  .hero > .name, .hero > .kicker {
+    opacity: var(--name-reveal, 1);
+    translate: 0 calc(22px * (1 - var(--name-reveal, 1)));
+  }
+  .hero-left > .headline, .hero-left > .avail {
+    opacity: var(--intro-reveal, 1);
+    translate: 0 calc(16px * (1 - var(--intro-reveal, 1)));
+  }
+  .hero:target > .name, .hero:target > .kicker,
+  .hero:target .headline, .hero:target .avail {
+    opacity: 1;
+    translate: none;
+  }
+}
 @media (max-width: 700px) {
   .hero-body { grid-template-columns: 1fr; grid-template-areas: "left" "facts"; }
 }

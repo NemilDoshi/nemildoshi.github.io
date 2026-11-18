@@ -6,13 +6,22 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const stadium = $('stadium-intro');
 if (!reduce) {
   const stage = stadium.querySelector('.stadium-stage');
+  const hero = $('hero');
+  const clampProgress = value => Math.max(0, Math.min(1, value));
+  function fadeProgress(value) {
+    const progress = clampProgress(value);
+    return progress * progress * (3 - 2 * progress);
+  }
   let pending = false;
   function renderAscent() {
     pending = false;
     const bounds = stadium.getBoundingClientRect();
     const travel = bounds.height - stage.offsetHeight;
-    const progress = travel > 0 ? Math.max(0, Math.min(1, -bounds.top / travel)) : 0;
+    const progress = travel > 0 ? clampProgress(-bounds.top / travel) : 0;
+    const heroTop = hero.getBoundingClientRect().top / innerHeight;
     stage.style.setProperty('--ascent', progress.toFixed(3));
+    hero.style.setProperty('--name-reveal', fadeProgress((.94 - heroTop) / .60).toFixed(3));
+    hero.style.setProperty('--intro-reveal', fadeProgress((.78 - heroTop) / .62).toFixed(3));
   }
   function queueAscent() {
     if (pending) return;
