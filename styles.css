@@ -565,3 +565,41 @@ html.touch-eye .eye .tag{display:none}
 @media (prefers-reduced-motion: reduce) {
   .stadium-fade { opacity: 1; background: linear-gradient(transparent 48%, var(--brick)); }
 }
+/* Adjacent scenes share a color at their boundary. */
+.home #top > .scene {
+  background-color: var(--bg);
+  background-image: linear-gradient(to bottom, var(--section-from, var(--bg)), transparent min(18svh, 145px));
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .deals-head, .record > h2, .wins > h2, .concept > div,
+    .hi-grid > *, .ledger > .row, .record-grid > *, .record-low > *,
+    #wins > .win, .contact-in {
+      animation: content-arrives linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 75%;
+    }
+    @keyframes content-arrives {
+      from { opacity: .4; translate: 0 18px; }
+      to { opacity: 1; translate: 0 0; }
+    }
+  }
+}
+@media (max-width: 700px) {
+  .home #top > .scene { min-height: auto; }
+  .dive { height: auto; }
+  .dive .sticky {
+    position: relative;
+    height: auto;
+    padding: 110px var(--pad) 80px;
+    overflow: clip;
+  }
+  .dive-lines { gap: 34px; padding: 0; }
+  .dive-lines li { grid-area: auto; opacity: 1; transform: none; transition: none; }
+  .dive .rings { opacity: .24; }
+  .journey .rail { overflow: visible; padding-bottom: 0; }
+  .journey .train { width: auto; display: grid; gap: 28px; }
+  .journey .car { width: 100%; height: auto; min-height: 185px; }
+  .journey .car::before, .journey .car::after, .journey .track { display: none; }
+  .journey .sticky { grid-template-rows: auto auto; gap: 24px; }
+}

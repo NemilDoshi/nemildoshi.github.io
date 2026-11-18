@@ -141,11 +141,11 @@ if (!reduce) {
   let ticking = false;
   function frame() {
     ticking = false; const vh = innerHeight, vw = innerWidth;
-    let r = dive.getBoundingClientRect(); const p = clamp(-r.top / (r.height - vh));
+    let r = dive.getBoundingClientRect(); const p = clamp(-r.top / Math.max(1, r.height - vh));
     ringsEl.style.setProperty('--s', (1 + p * p * 5).toFixed(3));
     dEye.style.opacity = (1 - p * 4).toFixed(2);
     const idx = p < .1 ? -1 : p < .4 ? 0 : p < .7 ? 1 : 2;
-    lines.forEach((l, i) => l.classList.toggle('on', i === idx));
+    lines.forEach((l, i) => l.classList.toggle('on', vw <= 700 || i === idx));
     r = hi.getBoundingClientRect(); const q = clamp((vh - r.top) / (vh + r.height));
     hiWord.style.setProperty('--x', ((.35 - q * .9) * (vw > 700 ? vw * .5 : 0)).toFixed(1) + 'px');
     if (vw > 700) {
