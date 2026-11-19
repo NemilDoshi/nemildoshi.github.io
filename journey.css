@@ -66,8 +66,8 @@ p,h1,h2,h3{margin:0}
 .bat-blade i{position:absolute;top:27%;left:5px;font:700 7px/1 system-ui,sans-serif;writing-mode:vertical-rl;letter-spacing:1px;color:#24495b}
 .bat-glove{position:absolute;bottom:-5px;left:-2px;width:20px;height:16px;border-radius:6px;transform:rotate(20deg);background:repeating-linear-gradient(90deg,#ebeee2 0 4px,#9cafac 4px 5px);border:1px solid #668989}
 .chapter-stop{position:absolute;z-index:5;left:var(--nx);top:var(--ny);width:100px;min-height:64px;display:flex;align-items:center;flex-direction:column;gap:6px;transform:translate(-50%,-50%);background:transparent;padding:3px 0;color:var(--muted);opacity:calc(.6 + .4 * var(--ready));touch-action:manipulation}
-.stop-number{display:grid;place-items:center;width:40px;height:40px;border:1px solid #a4b5ba40;border-radius:50%;background:var(--navy);font-size:13px;font-weight:500;transition:color .2s,border-color .2s,box-shadow .2s,background .2s}
-.stop-label{font-size:9px;line-height:1.2;letter-spacing:.015em;white-space:nowrap}
+.stop-number{color:#c3d0d0;display:grid;place-items:center;width:40px;height:40px;border:1px solid #a4b5ba40;border-radius:50%;background:var(--navy);font-size:13px;font-weight:500;transition:color .2s,border-color .2s,box-shadow .2s,background .2s}
+.stop-label{font-size:10px;line-height:1.2;letter-spacing:.015em;white-space:nowrap}
 .chapter-stop:hover,.chapter-stop.active,.chapter-stop:focus-visible{color:var(--gold);opacity:1}
 .chapter-stop.active .stop-number,.chapter-stop:hover .stop-number{border-color:var(--gold);background:#d5bb8312;box-shadow:0 0 0 5px #d5bb8308,0 0 22px #d5bb831a;color:var(--ivory)}
 .chapter-stop:focus-visible{outline:0}.chapter-stop:focus-visible .stop-number{outline:2px solid var(--ivory);outline-offset:5px}

@@ -23,21 +23,27 @@
   let shotAnimation = null;
   let opener = null;
   let listOpener = null;
+  let manualAim = false;
+  let storyScroll = 0;
+  let listScroll = 0;
   const clamp = v => Math.max(0, Math.min(1, v));
   const smooth = v => { v = clamp(v); return v * v * (3 - 2 * v); };
   const pad = n => String(n).padStart(2, '0');
   const esc = v => String(v ?? '').replace(/[&<>"']/g, x => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 
   function renderBat() {
-    const raised = reduceQuery.matches ? 1 : smooth((entrance - .35) / .45);
+    const raised = reduceQuery.matches || manualAim ? 1 : smooth((entrance - .35) / .45);
     $('bat-rig').style.setProperty('--bat-angle', (145 * (1 - raised) + angle * raised).toFixed(2) + 'deg');
   }
 
-  function select(number) {
+  function select(number, manual = false) {
+    if (manual) manualAim = true;
     const c = chapters[number - 1];
     // Unwrap the angle so moving between 11 and 12 does not spin the bat a full turn.
     const wanted = (number % 12) * 30;
-    angle += ((wanted - angle + 540) % 360) - 180;
+    let delta = ((wanted - angle) % 360 + 360) % 360;
+    if (delta > 180) delta -= 360;
+    angle += delta;
     if (active !== number) {
       active = number;
       stops.forEach((stop, i) => {
@@ -70,13 +76,14 @@
     const ready = entrance > .88 || reduceQuery.matches;
     $('entrance-caption').textContent = ready ? (fineQuery.matches ? 'Aim the bat. Choose a chapter.' : 'Tap a number. Open its story.') : 'Scroll. Step out. Take your stance.';
     $('stance-status').textContent = ready ? 'The field is yours ↗' : 'Scroll to take guard ↓';
-    if (pointer && !story.open && !list.open && jr.top < innerHeight && jr.bottom > 0) {
+    if (entrance < .05 && !story.open && !list.open) { manualAim = false; angle = (active % 12) * 30; }
+    if (pointer && !story.open && !list.open && shotTimer === null && entrance > .55 && jr.top < innerHeight && jr.bottom > 0) {
       const r = dial.getBoundingClientRect();
       const dx = pointer.x - r.left - r.width / 2;
       const dy = pointer.y - r.top - r.height / 2;
       if (Math.hypot(dx, dy) > r.width * .07) {
         const degrees = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
-        select(Math.round(degrees / 30) % 12 || 12);
+        select(Math.round(degrees / 30) % 12 || 12, true);
       }
       pointer = null;
     }
@@ -89,13 +96,13 @@
   addEventListener('resize', queue, {passive:true});
   reduceQuery.addEventListener('change', queue);
   document.addEventListener('pointermove', event => {
-    if (!fineQuery.matches || event.pointerType === 'touch' || story.open || list.open) return;
+    if (!fineQuery.matches || event.pointerType === 'touch' || story.open || list.open || shotTimer !== null) return;
     pointer = {x:event.clientX, y:event.clientY}; queue();
   }, {passive:true});
 
   function renderStory(number) {
     shown = number;
-    select(number);
+    select(number, true);
     const c = chapters[number - 1];
     $('story-kicker').textContent = `Chapter ${pad(number)} / ${c.category}`;
     $('story-count').textContent = `${pad(number)} / 12`;
@@ -109,6 +116,7 @@
   }
   function showStory(number, source) {
     opener = source || document.activeElement;
+    storyScroll = scrollY;
     renderStory(number);
     story.showModal();
     document.body.classList.add('dialog-open');
@@ -123,7 +131,7 @@
   }
   function playShot(number, source) {
     clearShot();
-    select(number);
+    select(number, true);
     // A direct click can always open the story, even before the scroll entrance finishes.
     if (reduceQuery.matches || entrance < .55) { showStory(number, source); return; }
     dial.classList.add('playing-shot');
@@ -144,8 +152,8 @@
 
   stops.forEach(stop => {
     const n = Number(stop.dataset.chapter);
-    stop.addEventListener('pointerenter', () => { if(fineQuery.matches) select(n); });
-    stop.addEventListener('focus', () => select(n));
+    stop.addEventListener('pointerenter', () => { if(fineQuery.matches) select(n, true); });
+    stop.addEventListener('focus', () => select(n, true));
     stop.addEventListener('click', () => playShot(n, stop));
   });
   dial.addEventListener('keydown', event => {
@@ -153,7 +161,7 @@
     event.preventDefault(); pointer = null;
     const n = event.key === 'Home' ? 1 : event.key === 'End' ? 12 : ((active - 1 + (['ArrowRight','ArrowDown'].includes(event.key) ? 1 : 11)) % 12) + 1;
     stops[n - 1].focus({preventScroll:true});
-    select(n);
+    select(n, true);
   });
   $('open-chapter').addEventListener('click', event => playShot(active, event.currentTarget));
   $('previous-chapter').addEventListener('click', () => renderStory((shown + 10) % 12 + 1));
@@ -163,14 +171,21 @@
   story.addEventListener('close', () => {
     clearShot(); document.body.classList.remove('dialog-open');
     opener?.focus({preventScroll:true});
+    scrollTo({top:storyScroll,behavior:'instant'});
+    queue();
   });
   document.querySelectorAll('[data-open-list]').forEach(button => button.addEventListener('click', () => {
-    clearShot(); listOpener = button; list.showModal();
+    clearShot(); listOpener = button; listScroll = scrollY; list.showModal();
     document.body.classList.add('dialog-open');
     list.querySelector('[data-close-list]').focus({preventScroll:true});
   }));
   list.addEventListener('close', () => {
-    if (!story.open) document.body.classList.remove('dialog-open');
+    if (!story.open) {
+      document.body.classList.remove('dialog-open');
+      listOpener?.focus({preventScroll:true});
+      scrollTo({top:listScroll,behavior:'instant'});
+      queue();
+    }
   });
   document.querySelectorAll('[data-list-chapter]').forEach(button => button.addEventListener('click', () => {
     const n = Number(button.dataset.listChapter);
