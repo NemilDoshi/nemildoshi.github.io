@@ -218,7 +218,7 @@
     clearShot();
     select(number, true);
     // A direct click can always open the story, even before the scroll entrance finishes.
-    if (reduceQuery.matches || entrance < .78 || poseRaise < .94) { showStory(number, source); return; }
+    if (reduceQuery.matches || entrance < .78 || poseRaise < .94 || !$('shot-ball')) { showStory(number, source); return; }
     dial.classList.add('playing-shot');
     dial.setAttribute('aria-busy','true');
     const r = dial.getBoundingClientRect();
