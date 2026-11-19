@@ -14,3 +14,5 @@
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.complex-hero{height:auto;min-height:0}.hero-stage{position:relative}.hero-copy{transform:none!important;opacity:1!important}.hero-world{transform:none!important}.hero-player{transform:none!important}.court-deck{transform:none!important}.shot-ball{transform:translate(180px,90px)!important}.zone-bridge{transform:rotate(-3deg)!important}}
 
 .hero-scroll{background:#fffdf4e8;padding:9px 14px;border:2px solid var(--ink);border-radius:18px;box-shadow:3px 3px 0 var(--ink)}
+
+@media(max-width:380px){.proof-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 15px}.proof-grid>div:nth-child(3):last-child{grid-column:1/-1}.proof-grid dt{font-size:10px}.proof-grid dd{font-size:25px}}
