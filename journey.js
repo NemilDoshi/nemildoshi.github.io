@@ -32,6 +32,10 @@
   let layoutDirty = true;
   let inView = false;
   let dialAspect = 1;
+  let previewNumber = 0;
+  let touchPreview = 0;
+  let previewAnchor = null;
+  const tooltip = $('chapter-tooltip');
   const player = $('player-entry');
   const bat = $('bat-rig');
   const torso = $('player-torso');
@@ -40,6 +44,34 @@
   const smooth = v => { v = clamp(v); return v * v * (3 - 2 * v); };
   const pad = n => String(n).padStart(2, '0');
   const esc = v => String(v ?? '').replace(/[&<>"']/g, x => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
+  const tapMode = () => !fineQuery.matches || innerWidth <= 820;
+
+  function hidePreview() {
+    tooltip.hidden = true;
+    dial.classList.remove('has-preview');
+    previewAnchor?.removeAttribute('aria-describedby');
+    previewAnchor = null;
+    previewNumber = touchPreview = 0;
+  }
+  function showPreview(number, mode) {
+    previewAnchor?.removeAttribute('aria-describedby');
+    previewNumber = number;
+    previewAnchor = stops[number-1];
+    select(number,true);
+    $('tooltip-label').textContent = chapters[number-1].label;
+    tooltip.dataset.mode = mode;
+    tooltip.hidden = false;
+    previewAnchor.setAttribute('aria-describedby','tooltip-label');
+    dial.classList.add('has-preview');
+    const r = previewAnchor.getBoundingClientRect();
+    const t = tooltip.getBoundingClientRect();
+    let left,top;
+    if (r.left > innerWidth*.65) { left=r.left-t.width-12;top=r.top+(r.height-t.height)/2; }
+    else if (r.right < innerWidth*.35) { left=r.right+12;top=r.top+(r.height-t.height)/2; }
+    else { left=r.left+(r.width-t.width)/2;top=r.top<innerHeight/2?r.bottom+12:r.top-t.height-12; }
+    tooltip.style.setProperty('left',Math.max(12,Math.min(innerWidth-t.width-12,left)).toFixed(1)+'px');
+    tooltip.style.setProperty('top',Math.max(78,Math.min(innerHeight-t.height-12,top)).toFixed(1)+'px');
+  }
 
   function bearing(number) {
     const radians = (number % 12) * Math.PI / 6;
@@ -80,7 +112,7 @@
     const settle = smooth((p - .50) / .18);
     const sway = Math.sin(phase) * 1.3 * gait;
     const bob = -(Math.sin(phase) ** 2) * 2.8 * gait + Math.sin(settle * Math.PI) * 1.8;
-    const lean = (-3 + Math.sin(phase) * 1.4) * gait;
+    const lean = (-3 + Math.sin(phase) * 1.4) * gait-Math.sin(poseRaise*Math.PI)*2.5;
     const radians = lean * Math.PI / 180;
     const project = (x,y) => ({x:100+(x-100)*Math.cos(radians)-(y-203)*Math.sin(radians)+sway,
       y:203+(x-100)*Math.sin(radians)+(y-203)*Math.cos(radians)+bob});
@@ -94,7 +126,7 @@
       const hip = project(hipX,203);
       const foot = {x:lerp((name === 'front' ? 82 : 116)+Math.cos(cycle)*18*gait,stanceX,settle),
         y:280-Math.max(0,Math.sin(cycle))*14*gait};
-      const knee = joint(hip,foot,44,45);
+      const knee = joint(hip,foot,41,41);
       limb[name+'-thigh'].setAttribute('d',`M${point(hip)}L${point(knee)}`);
       limb[name+'-shin'].setAttribute('d',`M${point(knee)}L${point(foot)}`);
       const shinAngle = Math.atan2(foot.y-knee.y,foot.x-knee.x)*180/Math.PI-90;
@@ -116,6 +148,13 @@
     $('bat-pivot').style.setProperty('--grip-y',(hand.y/3.1).toFixed(3)+'%');
     stage.style.setProperty('--walk',travel.toFixed(4));
     stage.style.setProperty('--ready',smooth((p-.60)/.34).toFixed(4));
+    const ballTravel = smooth((p-.12)/.70);
+    const ball = $('arrival-ball');
+    ball.style.setProperty('--ball-x',(83-33*ballTravel+Math.sin(ballTravel*Math.PI)*3).toFixed(3)+'%');
+    ball.style.setProperty('--ball-y',(12+70*ballTravel-Math.sin(ballTravel*Math.PI)*14).toFixed(3)+'%');
+    ball.style.setProperty('--ball-scale',(.35+Math.sin(ballTravel*Math.PI)*.7).toFixed(3));
+    ball.style.setProperty('--ball-turn',ballTravel.toFixed(3));
+    ball.style.setProperty('--ball-opacity',(reduceQuery.matches?0:smooth(ballTravel/.12)*(1-smooth((ballTravel-.75)/.25))).toFixed(3));
     renderBat();
   }
 
@@ -124,6 +163,9 @@
     const c = chapters[number - 1];
     // Unwrap the angle so moving between 11 and 12 does not spin the bat a full turn.
     aim(number);
+    const direction=number*Math.PI/6;
+    $('guide-line').setAttribute('x2',(50+Math.sin(direction)*42).toFixed(3));
+    $('guide-line').setAttribute('y2',(50-Math.cos(direction)*42).toFixed(3));
     if (active !== number) {
       active = number;
       stops.forEach((stop, i) => {
@@ -170,6 +212,7 @@
       const r = dial.getBoundingClientRect();
       const dx = pointer.x - r.left - r.width / 2;
       const dy = pointer.y - r.top - r.height / 2;
+      stage.style.setProperty('--look-x',Math.max(-1,Math.min(1,dx/(r.width/2))).toFixed(3));
       if (Math.hypot(dx, dy) > r.width * .07) {
         const degrees = (Math.atan2(dx/r.width, -dy/r.height) * 180 / Math.PI + 360) % 360;
         select(Math.round(degrees / 30) % 12 || 12, true);
@@ -184,8 +227,8 @@
     if (readLayout) layoutDirty=true;
     if (!framePending) { framePending = true; requestAnimationFrame(render); }
   }
-  addEventListener('scroll', queue, {passive:true});
-  addEventListener('resize', queue, {passive:true});
+  addEventListener('scroll', () => { hidePreview();queue(); }, {passive:true});
+  addEventListener('resize', () => { hidePreview();queue(); }, {passive:true});
   reduceQuery.addEventListener('change', queue);
   document.addEventListener('pointermove', event => {
     if (!fineQuery.matches || event.pointerType === 'touch' || story.open || list.open || shotTimer !== null) return;
@@ -207,6 +250,7 @@
     if (!reduceQuery.matches) $('story-body').animate([{opacity:.3,transform:'translateY(10px)'},{opacity:1,transform:'none'}], {duration:260,easing:'ease-out'});
   }
   function showStory(number, source) {
+    hidePreview();
     opener = source || document.activeElement;
     storyScroll = scrollY;
     renderStory(number);
@@ -223,6 +267,7 @@
   }
   function playShot(number, source) {
     clearShot();
+    hidePreview();
     select(number, true);
     // A direct click can always open the story, even before the scroll entrance finishes.
     if (reduceQuery.matches || entrance < .78 || poseRaise < .94 || !$('shot-ball')) { showStory(number, source); return; }
@@ -244,10 +289,20 @@
 
   stops.forEach(stop => {
     const n = Number(stop.dataset.chapter);
-    stop.addEventListener('pointerenter', () => { if(fineQuery.matches) select(n, true); });
-    stop.addEventListener('focus', () => select(n, true));
-    stop.addEventListener('click', () => playShot(n, stop));
+    stop.addEventListener('pointerenter', () => { if(!tapMode()) showPreview(n,'pointer'); });
+    stop.addEventListener('pointerleave', () => { if(!tapMode() && document.activeElement!==stop) hidePreview(); });
+    stop.addEventListener('focus', () => showPreview(n,'keyboard'));
+    stop.addEventListener('click', event => {
+      if(event.detail!==0 && (tapMode() || event.pointerType==='touch') && touchPreview!==n) {
+        touchPreview=n;showPreview(n,'touch');return;
+      }
+      playShot(n,stop);
+    });
   });
+  $('tooltip-open').addEventListener('click', () => { if(previewNumber) playShot(previewNumber,stops[previewNumber-1]); });
+  document.addEventListener('pointerdown', event => {
+    if (!event.target.closest('.chapter-stop,.chapter-tooltip')) hidePreview();
+  }, {passive:true});
   dial.addEventListener('keydown', event => {
     if (!['ArrowRight','ArrowDown','ArrowLeft','ArrowUp','Home','End'].includes(event.key)) return;
     event.preventDefault(); pointer = null;
@@ -266,7 +321,7 @@
     queue();
   });
   document.querySelectorAll('[data-open-list]').forEach(button => button.addEventListener('click', () => {
-    clearShot(); listOpener = button; listScroll = scrollY; list.showModal();
+    clearShot();hidePreview(); listOpener = button; listScroll = scrollY; list.showModal();
     document.body.classList.add('dialog-open');
     list.querySelector('[data-close-list]').focus({preventScroll:true});
   }));
