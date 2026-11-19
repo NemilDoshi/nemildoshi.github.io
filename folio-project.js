@@ -7,7 +7,7 @@ if (index < 0) {
 } else {
   const p = projects[index];
   document.title = `${p.short} · Nemil Doshi`;
-  main.style.setProperty('--bg', p.color);
+  document.getElementById('back').href = `index.html#${p.slug}`;
   main.innerHTML = `<article class="sheet"><header class="ph"><div class="ph-mark" aria-hidden="true" style="background:${p.color};display:grid;place-items:center;font:900 48px/1 var(--f-cut)">${esc(p.abbr)}</div>
     <div><p class="kicker">${esc(p.type)}</p><h1 class="cut">${esc(p.short)}</h1><p class="lede">${esc(p.org)}</p></div></header>
     <section class="sec"><h2>${esc(p.role)}</h2>
