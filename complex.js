@@ -18,11 +18,11 @@
     if(hr.bottom>0&&hr.top<vh){
       const p=clamp(-hr.top/Math.max(1,hero.offsetHeight-stage.offsetHeight));
       const mobile=innerWidth<=760;
-      stage.style.setProperty('--world-scale',(1+p*(mobile?.28:.42)).toFixed(3));
-      stage.style.setProperty('--world-y',`${(-p*(mobile?45:85)).toFixed(1)}px`);
+      stage.style.setProperty('--world-scale',(1+p*(mobile?.50:.42)).toFixed(3));
+      stage.style.setProperty('--world-y',`${(-p*(mobile?160:85)).toFixed(1)}px`);
       stage.style.setProperty('--world-x',`${(-p*(mobile?10:70)).toFixed(1)}px`);
       stage.style.setProperty('--world-rotate',`${(-4+p*7).toFixed(2)}deg`);
-      stage.style.setProperty('--player-x',`${(100-p*155).toFixed(1)}px`);
+      stage.style.setProperty('--player-x',`${((mobile?-110:40)-p*(mobile?70:130)).toFixed(1)}px`);
       stage.style.setProperty('--player-tilt',`${(8-p*12).toFixed(2)}deg`);
       stage.style.setProperty('--bat-lift',`${(36-p*72).toFixed(1)}deg`);
       stage.style.setProperty('--copy-y',`${(-p*95).toFixed(1)}px`);
