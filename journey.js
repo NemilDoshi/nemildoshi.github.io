@@ -63,6 +63,10 @@
     tooltip.hidden = false;
     previewAnchor.setAttribute('aria-describedby','tooltip-label');
     dial.classList.add('has-preview');
+    positionPreview();
+  }
+  function positionPreview() {
+    if(!previewAnchor || tooltip.hidden) return;
     const r = previewAnchor.getBoundingClientRect();
     const t = tooltip.getBoundingClientRect();
     let left,top;
@@ -227,7 +231,13 @@
     if (readLayout) layoutDirty=true;
     if (!framePending) { framePending = true; requestAnimationFrame(render); }
   }
-  addEventListener('scroll', () => { hidePreview();queue(); }, {passive:true});
+  addEventListener('scroll', () => {
+    if(previewAnchor && document.activeElement===previewAnchor && tooltip.dataset.mode!=='pointer') positionPreview();
+    else hidePreview();
+    queue();
+  }, {passive:true});
+  addEventListener('wheel', hidePreview, {passive:true});
+  addEventListener('touchmove', hidePreview, {passive:true});
   addEventListener('resize', () => { hidePreview();queue(); }, {passive:true});
   reduceQuery.addEventListener('change', queue);
   document.addEventListener('pointermove', event => {

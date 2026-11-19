@@ -354,3 +354,6 @@ dialog::backdrop{background:#030b13bf;backdrop-filter:blur(9px)}
 }
 @media(prefers-reduced-motion:reduce){.stadium-backdrop{transform:none;will-change:auto}.light-cone{display:none}.arrival-ball{display:none}.chapter-tooltip{animation:none}.shot-guide{transition:none}}
 
+
+.journey-dial{user-select:none;-webkit-user-select:none}
+.light-cone{opacity:calc(.10 + var(--ready)*.28);mask-image:linear-gradient(90deg,transparent,#0008 30%,#000 50%,#0008 70%,transparent)}
