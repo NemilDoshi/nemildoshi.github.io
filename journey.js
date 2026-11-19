@@ -31,6 +31,7 @@
   let lastFrameTime = 0;
   let layoutDirty = true;
   let inView = false;
+  let dialAspect = 1;
   const player = $('player-entry');
   const bat = $('bat-rig');
   const torso = $('player-torso');
@@ -39,6 +40,16 @@
   const smooth = v => { v = clamp(v); return v * v * (3 - 2 * v); };
   const pad = n => String(n).padStart(2, '0');
   const esc = v => String(v ?? '').replace(/[&<>"']/g, x => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
+
+  function bearing(number) {
+    const radians = (number % 12) * Math.PI / 6;
+    return (Math.atan2(Math.sin(radians)*dialAspect,Math.cos(radians))*180/Math.PI+360)%360;
+  }
+  function aim(number) {
+    let delta = ((bearing(number)-angle)%360+360)%360;
+    if(delta>180) delta-=360;
+    angle+=delta;
+  }
 
   function renderBat() {
     const desired = ((angle % 360) + 360) % 360;
@@ -112,20 +123,14 @@
     if (manual) manualAim = true;
     const c = chapters[number - 1];
     // Unwrap the angle so moving between 11 and 12 does not spin the bat a full turn.
-    const wanted = (number % 12) * 30;
-    let delta = ((wanted - angle) % 360 + 360) % 360;
-    if (delta > 180) delta -= 360;
-    angle += delta;
+    aim(number);
     if (active !== number) {
       active = number;
       stops.forEach((stop, i) => {
         stop.classList.toggle('active', i + 1 === number);
         stop.setAttribute('aria-pressed', i + 1 === number ? 'true' : 'false');
       });
-      $('preview-number').textContent = pad(number);
-      $('preview-title').textContent = c.label;
-      $('preview-category').textContent = c.category;
-      $('mobile-preview').textContent = `${pad(number)} / ${c.label}`;
+      $('chapter-announcement').textContent = `Chapter ${pad(number)}: ${c.label}`;
     }
     renderBat();
     queue(false);
@@ -136,11 +141,14 @@
     if (layoutDirty) {
       const sr = stadium.getBoundingClientRect();
       const jr = journey.getBoundingClientRect();
+      const dr = dial.getBoundingClientRect();
       const stadiumTravel = sr.height - stadiumStage.offsetHeight;
       const travel = jr.height - stage.offsetHeight;
       const ascent = reduceQuery.matches ? 0 : stadiumTravel > 0 ? clamp(-sr.top/stadiumTravel) : 1;
       targetEntrance = reduceQuery.matches ? 1 : clamp(-jr.top/Math.max(1,travel));
       inView = jr.top < innerHeight && jr.bottom > 0;
+      dialAspect = dr.width/Math.max(1,dr.height);
+      aim(active);
       stadiumStage.style.setProperty('--ascent',ascent.toFixed(4));
       stadiumStage.style.setProperty('--tunnel-fade',smooth((ascent-.44)/.56).toFixed(4));
       layoutDirty = false;
@@ -152,19 +160,18 @@
     const poseStep = Math.min(Math.abs(targetEntrance-entrance)*alpha,dt*.00065);
     entrance = reduceQuery.matches || !inView ? targetEntrance : entrance+Math.sign(targetEntrance-entrance)*poseStep;
     if (Math.abs(entrance-targetEntrance)<.0004) entrance=targetEntrance;
-    if (targetEntrance < .05 && !story.open && !list.open) { manualAim=false; angle=(active%12)*30; }
+    if (targetEntrance < .05 && !story.open && !list.open) { manualAim=false; angle=bearing(active); }
     const liftTarget = reduceQuery.matches ? 1 : smooth((entrance-(manualAim ? .50 : .64))/(manualAim ? .22 : .30));
     poseRaise = reduceQuery.matches || !inView ? liftTarget : lerp(poseRaise,liftTarget,alpha);
     if (Math.abs(poseRaise-liftTarget)<.0004) poseRaise=liftTarget;
     const ready = entrance > .94 || reduceQuery.matches;
-    $('entrance-caption').textContent = ready ? (fineQuery.matches ? 'Aim the bat. Choose a chapter.' : 'Tap a number. Open its story.') : 'Scroll. Step out. Take your stance.';
-    $('stance-status').textContent = ready ? 'The field is yours ↗' : 'Scroll to take guard ↓';
+    stage.setAttribute('data-entrance',ready ? 'ready' : 'walking');
     if (pointer && !story.open && !list.open && shotTimer === null && entrance > .78 && inView) {
       const r = dial.getBoundingClientRect();
       const dx = pointer.x - r.left - r.width / 2;
       const dy = pointer.y - r.top - r.height / 2;
       if (Math.hypot(dx, dy) > r.width * .07) {
-        const degrees = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
+        const degrees = (Math.atan2(dx/r.width, -dy/r.height) * 180 / Math.PI + 360) % 360;
         select(Math.round(degrees / 30) % 12 || 12, true);
       }
       pointer = null;
@@ -248,7 +255,6 @@
     stops[n - 1].focus({preventScroll:true});
     select(n, true);
   });
-  $('open-chapter').addEventListener('click', event => playShot(active, event.currentTarget));
   $('previous-chapter').addEventListener('click', () => renderStory((shown + 10) % 12 + 1));
   $('next-chapter').addEventListener('click', () => renderStory(shown % 12 + 1));
   document.querySelector('[data-close-story]').addEventListener('click', () => story.close());
@@ -286,7 +292,6 @@
     const r = dialog.getBoundingClientRect();
     return event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom;
   }
-  $('control-hint').textContent = fineQuery.matches ? 'Move your pointer to aim. Choose a chapter to play the shot.' : 'Tap any number to aim the bat and open its story. Or use All chapters.';
   // Preserve older links to the homepage's former project/section anchors.
   const oldLinks = {'college-cafeteria':2,'nj-group':3,'household-research':4,'falcon-labs':5,'retail-summit':7,hyrox:8,record:10,about:1,contact:11};
   const oldChapter = oldLinks[location.hash.slice(1)];
