@@ -26,14 +26,86 @@
   let manualAim = false;
   let storyScroll = 0;
   let listScroll = 0;
+  let targetEntrance = 0;
+  let poseRaise = 0;
+  let lastFrameTime = 0;
+  let layoutDirty = true;
+  let inView = false;
+  const player = $('player-entry');
+  const bat = $('bat-rig');
+  const torso = $('player-torso');
+  const limb = Object.fromEntries(['front-thigh','front-shin','front-pad','front-shoe','back-thigh','back-shin','back-pad','back-shoe','free-arm','bat-arm','bat-sleeve'].map(id => [id,$(id)]));
   const clamp = v => Math.max(0, Math.min(1, v));
   const smooth = v => { v = clamp(v); return v * v * (3 - 2 * v); };
   const pad = n => String(n).padStart(2, '0');
   const esc = v => String(v ?? '').replace(/[&<>"']/g, x => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 
   function renderBat() {
-    const raised = reduceQuery.matches || manualAim ? 1 : smooth((entrance - .35) / .45);
-    $('bat-rig').style.setProperty('--bat-angle', (145 * (1 - raised) + angle * raised).toFixed(2) + 'deg');
+    const desired = ((angle % 360) + 360) % 360;
+    let liftAngle = ((desired - 145 + 540) % 360) - 180;
+    const rotation = poseRaise > .999 ? angle : 145 + liftAngle * poseRaise;
+    bat.style.setProperty('--bat-angle', rotation.toFixed(2) + 'deg');
+    dial.classList.toggle('is-aiming', manualAim && poseRaise > .999);
+  }
+
+  // Solve a two-part limb so the knee bends while the shoe stays on the ground.
+  function joint(start, end, upper, lower, bend = -1) {
+    const dx = end.x - start.x, dy = end.y - start.y;
+    const distance = Math.max(.001, Math.min(Math.hypot(dx,dy), upper + lower - .001));
+    const along = (upper * upper - lower * lower + distance * distance) / (2 * distance);
+    const away = Math.sqrt(Math.max(0,upper * upper - along * along));
+    const direction = Math.atan2(dy,dx);
+    return {x:start.x + Math.cos(direction) * along - Math.sin(direction) * away * bend,
+      y:start.y + Math.sin(direction) * along + Math.cos(direction) * away * bend};
+  }
+  const lerp = (a,b,t) => a + (b-a)*t;
+  const point = p => `${p.x.toFixed(2)} ${p.y.toFixed(2)}`;
+  function renderPose() {
+    const p = entrance;
+    const walking = clamp((p - .02) / .60);
+    const travel = smooth(walking);
+    const phase = walking * Math.PI * 4;
+    const gait = smooth(walking / .10) * (1 - smooth((walking - .78) / .22));
+    const settle = smooth((p - .50) / .18);
+    const sway = Math.sin(phase) * 1.3 * gait;
+    const bob = -(Math.sin(phase) ** 2) * 2.8 * gait + Math.sin(settle * Math.PI) * 1.8;
+    const lean = (-3 + Math.sin(phase) * 1.4) * gait;
+    const radians = lean * Math.PI / 180;
+    const project = (x,y) => ({x:100+(x-100)*Math.cos(radians)-(y-203)*Math.sin(radians)+sway,
+      y:203+(x-100)*Math.sin(radians)+(y-203)*Math.cos(radians)+bob});
+    player.style.setProperty('--player-x', lerp(24,50,travel).toFixed(3)+'%');
+    player.style.setProperty('--player-y', (lerp(52,50,travel)-Math.sin(travel*Math.PI)*1.3).toFixed(3)+'%');
+    player.style.setProperty('--player-scale', lerp(.64,1,travel).toFixed(4));
+    player.style.setProperty('--player-opacity', (reduceQuery.matches ? 1 : smooth((p-.005)/.17)).toFixed(4));
+    torso.setAttribute('transform',`translate(${sway.toFixed(2)} ${bob.toFixed(2)}) rotate(${lean.toFixed(2)} 100 203)`);
+    for (const [name, hipX, stanceX, offset] of [['front',84,60,0],['back',108,132,Math.PI]]) {
+      const cycle = phase + offset;
+      const hip = project(hipX,203);
+      const foot = {x:lerp((name === 'front' ? 82 : 116)+Math.cos(cycle)*18*gait,stanceX,settle),
+        y:280-Math.max(0,Math.sin(cycle))*14*gait};
+      const knee = joint(hip,foot,44,45);
+      limb[name+'-thigh'].setAttribute('d',`M${point(hip)}L${point(knee)}`);
+      limb[name+'-shin'].setAttribute('d',`M${point(knee)}L${point(foot)}`);
+      const shinAngle = Math.atan2(foot.y-knee.y,foot.x-knee.x)*180/Math.PI-90;
+      limb[name+'-pad'].setAttribute('transform',`translate(${point(knee)}) rotate(${shinAngle.toFixed(2)})`);
+      const roll = Math.sin(cycle)*9*gait + (name==='front' ? -8 : 6)*settle;
+      limb[name+'-shoe'].setAttribute('transform',`translate(${point(foot)}) rotate(${roll.toFixed(2)})`);
+    }
+    limb['free-arm'].setAttribute('transform',`rotate(${(-Math.cos(phase)*9*gait).toFixed(2)} 64 125)`);
+    // The hand leads the raise in a small arc; the bat shares its exact pivot.
+    const grip = {x:lerp(120,103,poseRaise)+Math.sin(poseRaise*Math.PI)*10,
+      y:lerp(174,150,poseRaise)-Math.sin(poseRaise*Math.PI)*14};
+    const shoulder = {x:112,y:124};
+    const elbow = joint(shoulder,grip,28,28);
+    limb['bat-arm'].setAttribute('d',`M${point(shoulder)}L${point(elbow)}L${point(grip)}`);
+    const sleeve = {x:lerp(shoulder.x,elbow.x,.45),y:lerp(shoulder.y,elbow.y,.45)};
+    limb['bat-sleeve'].setAttribute('d',`M${point(shoulder)}L${point(sleeve)}`);
+    const hand = project(grip.x,grip.y);
+    $('bat-pivot').style.setProperty('--grip-x',(hand.x/2).toFixed(3)+'%');
+    $('bat-pivot').style.setProperty('--grip-y',(hand.y/3.1).toFixed(3)+'%');
+    stage.style.setProperty('--walk',travel.toFixed(4));
+    stage.style.setProperty('--ready',smooth((p-.60)/.34).toFixed(4));
+    renderBat();
   }
 
   function select(number, manual = false) {
@@ -56,28 +128,38 @@
       $('mobile-preview').textContent = `${pad(number)} / ${c.label}`;
     }
     renderBat();
+    queue(false);
   }
 
-  function render() {
+  function render(now = performance.now()) {
     framePending = false;
-    const sr = stadium.getBoundingClientRect();
-    const stadiumTravel = sr.height - stadiumStage.offsetHeight;
-    const ascent = reduceQuery.matches ? 0 : stadiumTravel > 0 ? clamp(-sr.top / stadiumTravel) : 1;
-    stadiumStage.style.setProperty('--ascent', ascent.toFixed(4));
-    stadiumStage.style.setProperty('--tunnel-fade', smooth((ascent - .44) / .56).toFixed(4));
-    const jr = journey.getBoundingClientRect();
-    const travel = jr.height - stage.offsetHeight;
-    entrance = reduceQuery.matches ? 1 : clamp(-jr.top / Math.max(1, travel));
-    const walk = reduceQuery.matches ? 1 : smooth(entrance / .58);
-    stage.style.setProperty('--walk', walk.toFixed(4));
-    stage.style.setProperty('--stride', (Math.sin(walk * Math.PI * 10) * 12 * (1 - smooth((walk - .8) / .2))).toFixed(3) + 'deg');
-    stage.style.setProperty('--step-bob', (-Math.abs(Math.sin(walk * Math.PI * 10)) * 3 * (1 - walk)).toFixed(3) + 'px');
-    stage.style.setProperty('--ready', (reduceQuery.matches ? 1 : smooth((entrance - .36) / .56)).toFixed(4));
-    const ready = entrance > .88 || reduceQuery.matches;
+    if (layoutDirty) {
+      const sr = stadium.getBoundingClientRect();
+      const jr = journey.getBoundingClientRect();
+      const stadiumTravel = sr.height - stadiumStage.offsetHeight;
+      const travel = jr.height - stage.offsetHeight;
+      const ascent = reduceQuery.matches ? 0 : stadiumTravel > 0 ? clamp(-sr.top/stadiumTravel) : 1;
+      targetEntrance = reduceQuery.matches ? 1 : clamp(-jr.top/Math.max(1,travel));
+      inView = jr.top < innerHeight && jr.bottom > 0;
+      stadiumStage.style.setProperty('--ascent',ascent.toFixed(4));
+      stadiumStage.style.setProperty('--tunnel-fade',smooth((ascent-.44)/.56).toFixed(4));
+      layoutDirty = false;
+    }
+    const dt = Math.min(48,Math.max(8,now-lastFrameTime || 16));
+    lastFrameTime = now;
+    const alpha = 1-Math.exp(-dt/105);
+    // A large touch fling still shows the steps and raise instead of skipping poses.
+    const poseStep = Math.min(Math.abs(targetEntrance-entrance)*alpha,dt*.00065);
+    entrance = reduceQuery.matches || !inView ? targetEntrance : entrance+Math.sign(targetEntrance-entrance)*poseStep;
+    if (Math.abs(entrance-targetEntrance)<.0004) entrance=targetEntrance;
+    if (targetEntrance < .05 && !story.open && !list.open) { manualAim=false; angle=(active%12)*30; }
+    const liftTarget = reduceQuery.matches ? 1 : smooth((entrance-(manualAim ? .50 : .64))/(manualAim ? .22 : .30));
+    poseRaise = reduceQuery.matches || !inView ? liftTarget : lerp(poseRaise,liftTarget,alpha);
+    if (Math.abs(poseRaise-liftTarget)<.0004) poseRaise=liftTarget;
+    const ready = entrance > .94 || reduceQuery.matches;
     $('entrance-caption').textContent = ready ? (fineQuery.matches ? 'Aim the bat. Choose a chapter.' : 'Tap a number. Open its story.') : 'Scroll. Step out. Take your stance.';
     $('stance-status').textContent = ready ? 'The field is yours ↗' : 'Scroll to take guard ↓';
-    if (entrance < .05 && !story.open && !list.open) { manualAim = false; angle = (active % 12) * 30; }
-    if (pointer && !story.open && !list.open && shotTimer === null && entrance > .55 && jr.top < innerHeight && jr.bottom > 0) {
+    if (pointer && !story.open && !list.open && shotTimer === null && entrance > .78 && inView) {
       const r = dial.getBoundingClientRect();
       const dx = pointer.x - r.left - r.width / 2;
       const dy = pointer.y - r.top - r.height / 2;
@@ -87,9 +169,12 @@
       }
       pointer = null;
     }
-    renderBat();
+    renderPose();
+    // Continue only until the scroll-driven pose has settled, with no idle animation loop.
+    if (inView && !reduceQuery.matches && (Math.abs(entrance-targetEntrance)>.0004 || Math.abs(poseRaise-liftTarget)>.0004)) queue(false);
   }
-  function queue() {
+  function queue(readLayout = true) {
+    if (readLayout) layoutDirty=true;
     if (!framePending) { framePending = true; requestAnimationFrame(render); }
   }
   addEventListener('scroll', queue, {passive:true});
@@ -133,7 +218,7 @@
     clearShot();
     select(number, true);
     // A direct click can always open the story, even before the scroll entrance finishes.
-    if (reduceQuery.matches || entrance < .55) { showStory(number, source); return; }
+    if (reduceQuery.matches || entrance < .78 || poseRaise < .94) { showStory(number, source); return; }
     dial.classList.add('playing-shot');
     dial.setAttribute('aria-busy','true');
     const r = dial.getBoundingClientRect();
