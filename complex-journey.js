@@ -34,9 +34,15 @@ class CourtActionClock {
     const desired=direction*Math.min(maxSpeed,Math.sqrt(2*acceleration*Math.abs(distance)));
     const before=a.velocity;
     a.velocity+=Math.max(-acceleration*dt,Math.min(acceleration*dt,desired-a.velocity));
-    const step=(before+a.velocity)*.5*dt;
+    const proposed=(before+a.velocity)*.5*dt;
+    const step=Math.max(-this.viewport()*.016,Math.min(this.viewport()*.016,proposed));
+    if(step!==proposed&&dt>0)a.velocity=step/dt;
     if(Math.sign(step)===direction&&Math.abs(step)>=Math.abs(distance)){a.position=destination;a.velocity=0;return true}
     a.position+=step;return false;
+  }
+  startArrival(a,ground,now){
+    a.id=ground.id;a.position=this.gate(ground);a.velocity=0;a.state='arriving';a.started=now;a.lastTick=now;
+    return {state:'arriving',scroll:a.position,velocity:0,play:null};
   }
   startPerformance(a,ground,now){
     a.id=ground.id;a.position=this.gate(ground);a.velocity=0;
@@ -48,8 +54,13 @@ class CourtActionClock {
     if(a.state==='approach'){
       const ground=this.grounds().find(g=>g.id===a.id);
       if(!ground){this.active=null;return null}
-      if(this.move(a,this.gate(ground),now))return this.startPerformance(a,ground,now);
+      if(this.move(a,this.gate(ground),now))return this.startArrival(a,ground,now);
       return {state:'approach',scroll:a.position,velocity:a.velocity,play:null};
+    }
+    if(a.state==='arriving'){
+      a.lastTick=now;const ground=this.grounds().find(g=>g.id===a.id);
+      if(now-a.started>=220)return this.startPerformance(a,ground,now);
+      return {state:'arriving',scroll:a.position,velocity:0,play:null};
     }
     if(a.state==='playing'){
       a.lastTick=now;
@@ -65,7 +76,7 @@ class CourtActionClock {
     const next=this.crossing(a.position,a.target);
     const destination=next?this.gate(next):a.target;
     if(this.move(a,destination,now)){
-      if(next)return this.startPerformance(a,next,now);
+      if(next)return this.startArrival(a,next,now);
       this.active=null;return {state:'complete',scroll:a.position,velocity:0,play:null};
     }
     return {state:'travel',scroll:a.position,velocity:a.velocity,play:null};
@@ -213,9 +224,13 @@ if(typeof module!=='undefined'&&module.exports)module.exports=CourtActionClock;
   function cameraRate(cameraY){
     if(!points.length)return innerHeight*.0013;
     const center=cameraY+innerHeight*.70;
-    const a=pointAt(center-8),b=pointAt(center+8);
-    const slope=Math.abs((b.x-a.x)/Math.max(1,b.y-a.y));
-    return Math.min(innerHeight*(mobile?.00135:.00155),(mobile?.38:.52)/Math.max(.10,slope));
+    let slope=0;
+    // Include the guide's short follow lag as well as the bend ahead.
+    for(let offset=-96;offset<=96;offset+=32){
+      const a=pointAt(center+offset-8),b=pointAt(center+offset+8);
+      slope=Math.max(slope,Math.abs((b.x-a.x)/Math.max(1,b.y-a.y)));
+    }
+    return Math.min(innerHeight*(mobile?.00135:.00155),(mobile?.30:.46)/Math.max(.10,slope));
   }
   function render(now){
     pending=false;
@@ -262,7 +277,7 @@ if(typeof module!=='undefined'&&module.exports)module.exports=CourtActionClock;
     const routeY=animatedY+vh*.70;
     const play=timed?.play?bounds.find(g=>g.id===timed.play.id):null;
     const playProgress=timed?.play?.progress||0;
-    const pathY=play?play.dockY:routeY;
+    const pathY=play?mix(routeY,play.dockY,smooth(playProgress/.10)):routeY;
     const to=pointAt(pathY);
     const playWeight=play?smooth(playProgress/.15)*smooth((1-playProgress)/.32):0;
     const playRect=play?play.art.getBoundingClientRect():null;
@@ -392,7 +407,7 @@ if(typeof module!=='undefined'&&module.exports)module.exports=CourtActionClock;
       track.style.setProperty('--impact-x',`${impactPoint.x.toFixed(2)}px`);track.style.setProperty('--impact-y',`${impactPoint.y.toFixed(2)}px`);
       track.style.setProperty('--impact-scale',(unit*.8).toFixed(4));track.style.setProperty('--impact-opacity',impact.toFixed(3));
     }
-    if(previousGuide&&actionClock.active){maximumGuideStep=Math.max(maximumGuideStep,Math.hypot(x-previousGuide.x,footY-previousGuide.y));document.documentElement.dataset.maxGuideStep=maximumGuideStep.toFixed(2)}
+    if(previousGuide&&actionClock.active){const delta=Math.hypot(x-previousGuide.x,footY-previousGuide.y);if(delta>maximumGuideStep){maximumGuideStep=delta;document.documentElement.dataset.maxGuideStepAt=JSON.stringify({state:timed?.state,ground:active.id,from:previousGuide,to:{x,y:footY}})}document.documentElement.dataset.maxGuideStep=maximumGuideStep.toFixed(2)}
     previousGuide={x,y:footY};
     guide.style.width=`${width.toFixed(2)}px`;guide.style.height=`${h.toFixed(2)}px`;
     guide.style.transform=`translate3d(${(x-width*65/190).toFixed(2)}px,${(footY-h*205/225).toFixed(2)}px,0)`;
