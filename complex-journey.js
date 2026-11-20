@@ -218,7 +218,8 @@
         projectile.x=clamp(projectile.x,a.left+18,a.left+a.width-18);
         projectile.y=clamp(projectile.y,a.top+22,a.top+a.height-12);
         track.style.setProperty('--projectile-x',`${projectile.x.toFixed(2)}px`);track.style.setProperty('--projectile-y',`${projectile.y.toFixed(2)}px`);
-        track.style.setProperty('--projectile-scale',(unit*(actionSport==='cricket'||actionSport==='tennis'?.45:.85)).toFixed(4));
+        const ballSize=actionSport==='basketball'?mix(.85,.50,smooth((p-.38)/.33)):actionSport==='football'?mix(.85,.42,smooth((p-.40)/.34)):.36;
+        track.style.setProperty('--projectile-scale',(unit*ballSize).toFixed(4));
         track.style.setProperty('--projectile-spin',`${(p*650).toFixed(2)}deg`);track.style.setProperty('--projectile-opacity',opacity.toFixed(3));
       }
       track.style.setProperty('--impact-x',`${impactPoint.x.toFixed(2)}px`);track.style.setProperty('--impact-y',`${impactPoint.y.toFixed(2)}px`);
