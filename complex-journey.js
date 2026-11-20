@@ -21,7 +21,9 @@
     height=Math.ceil(document.querySelector('.complex-footer').getBoundingClientRect().bottom+scrollY);
     heroTravel=hero.offsetHeight-stage.offsetHeight;
     const firstY=hero.offsetTop+hero.offsetHeight-innerHeight*.32;
-    points=[{x:rail,y:firstY}];stops=[];
+    const start=origin.getBoundingClientRect();
+    const startX=clamp(start.left+start.width/2,rail,document.documentElement.clientWidth-70);
+    points=[{x:startX,y:firstY}];stops=[];
     const viewportY=scrollY;
     for(const zone of zones){
       const zr=zone.getBoundingClientRect();
@@ -83,7 +85,9 @@
     const initialWidth=artWidth/1080*1.5*190;
     const handoff=smooth((y-heroTravel*.65)/(vh*.80));
     const to=pointAt(y+vh*.70);
-    const width=mix(initialWidth,mobile?60:104,handoff);
+    const courtPresence=smooth((to.x-rail)/(mobile?125:260));
+    const routeWidth=(mobile?60:104)+courtPresence*(mobile?48:34);
+    const width=mix(initialWidth,routeWidth,handoff);
     const h=width*225/190;
     let x=mix(from.left+from.width/2,to.x,handoff);
     const footY=mix(from.top+from.height/2,to.y-y,handoff);
