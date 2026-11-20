@@ -114,7 +114,7 @@
     const desiredActivity=clamp(distance/Math.max(1,dt*.60));
     activity=mix(activity,desiredActivity,1-Math.exp(-dt/(desiredActivity>activity?70:110)));
     if(Math.abs(y-animatedY)<.06&&activity<.015){animatedY=y;activity=0;}
-    phase+=Math.sign(dy)*Math.min(distance,32)/(mobile?26:34);
+    phase+=Math.sign(dy)*Math.min(distance,dt*.30)/(mobile?26:34);
     const step=Math.sin(phase), opposite=Math.sin(phase+Math.PI);
     lean=mix(lean,clamp(dx*.05,-3,3),1-Math.exp(-dt/90));
     const set=(name,value,unit='deg')=>guide.style.setProperty(name,`${value.toFixed(3)}${unit}`);
