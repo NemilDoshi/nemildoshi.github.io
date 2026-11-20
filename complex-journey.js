@@ -13,17 +13,17 @@
   const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
   const smooth=t=>{t=clamp(t);return t*t*(3-2*t)};
   const mix=(a,b,t)=>a+(b-a)*t;
-  let points=[],stops=[],height=0,mobile=false,rail=0,pending=false,dirty=true;
-  let lastY=scrollY,lastX=0,heroTravel=0;
+  let points=[],stops=[],bounds=[],height=0,mobile=false,rail=0,pending=false,dirty=true;
+  let heroTravel=0, animatedY=scrollY, lastFrame=0, phase=0, activity=0, lastPoint=null, snap=true, lean=0;
   function measure(){
     mobile=innerWidth<=760;
-    rail=mobile?20:44;
+    rail=mobile?(innerWidth<=380?27:30):64;
     height=Math.ceil(document.querySelector('.complex-footer').getBoundingClientRect().bottom+scrollY);
     heroTravel=hero.offsetHeight-stage.offsetHeight;
     const firstY=hero.offsetTop+hero.offsetHeight-innerHeight*.32;
     const start=origin.getBoundingClientRect();
     const startX=clamp(start.left+start.width/2,rail,document.documentElement.clientWidth-70);
-    points=[{x:startX,y:firstY}];stops=[];
+    points=[{x:startX,y:firstY}];stops=[];bounds=[];
     const viewportY=scrollY;
     for(const zone of zones){
       const zr=zone.getBoundingClientRect();
@@ -34,12 +34,13 @@
       const artTop=mobile?ar.top+viewportY:layout.top+viewportY;
       const zoneTop=zr.top+viewportY;
       const zoneBottom=zr.bottom+viewportY;
+      bounds.push({id:zone.id,top:zoneTop,artTop,artHeight:ar.height});
       points.push({x:rail,y:zoneTop+105});
-      points.push({x:rail,y:artTop-22});
-      points.push({x:ar.left+ar.width*.17,y:artTop+ar.height*.30});
-      const dock={x:ar.left+ar.width*.67,y:artTop+ar.height*.76,id:zone.id};
+      points.push({x:rail,y:artTop+48});
+      points.push({x:ar.left+ar.width*.17,y:artTop+ar.height*.48});
+      const dock={x:ar.left+ar.width*(mobile?.60:.67),y:artTop+ar.height*.80,id:zone.id};
       points.push(dock);stops.push(dock);
-      points.push({x:rail,y:artTop+ar.height+(mobile?60:22)});
+      points.push({x:rail,y:artTop+ar.height+(mobile?88:38)});
       points.push({x:rail,y:zoneBottom-65});
     }
     points.sort((a,b)=>a.y-b.y);
@@ -75,49 +76,70 @@
     const e=t*t*(3-2*t);
     return {x:mix(a.x,b.x,e),y};
   }
-  function render(){
+  function render(now){
     pending=false;
-    if(reduce.matches){guide.classList.remove('is-ready');track.classList.remove('is-visible');return}
-    if(dirty)measure();
+    if(reduce.matches){guide.classList.remove('is-ready');track.classList.remove('is-visible');lastFrame=0;return}
+    const dt=Math.min(40,lastFrame?now-lastFrame:16.67);lastFrame=now;
+    if(dirty){measure();snap=true;lastPoint=null;}
     const y=scrollY,vh=innerHeight;
-    const from=origin.getBoundingClientRect();
-    const artWidth=document.querySelector('.hero-world').getBoundingClientRect().width;
-    const initialWidth=artWidth/1080*1.5*190;
-    const handoff=smooth((y-heroTravel*.65)/(vh*.80));
-    const to=pointAt(y+vh*.70);
-    const courtPresence=smooth((to.x-rail)/(mobile?125:260));
-    const routeWidth=(mobile?60:104)+courtPresence*(mobile?48:34);
-    const width=mix(initialWidth,routeWidth,handoff);
+    if(snap){animatedY=y;snap=false;activity=0;lastPoint=null;}
+    else {
+      // Time-based damping absorbs coarse touch events without intercepting native scrolling.
+      animatedY=clamp(animatedY,y-vh*.22,y+vh*.22);
+      animatedY=mix(animatedY,y,1-Math.exp(-dt/64));
+    }
+    const handoff=smooth((animatedY-heroTravel*.65)/(vh*.80));
+    const to=pointAt(animatedY+vh*.70);
+    let active=bounds[0];for(const ground of bounds)if(to.y>=ground.top+60)active=ground;
+    const sport=handoff<.5?'cricket':active.id;
+    if(guide.dataset.sport!==sport)guide.dataset.sport=sport;
+    guide.dataset.ground=active.id;
+    const entrance=smooth((to.y-active.artTop-48)/Math.max(1,active.artHeight*.42));
+    const courtPresence=smooth((to.x-rail)/(mobile?120:260))*entrance;
+    const base=mobile?(innerWidth<=380?76:84):142;
+    const routeWidth=base+courtPresence*(mobile?(innerWidth<=380?70:76):54);
+    let width=routeWidth, x=to.x, footY=to.y-y;
+    if(handoff<1){
+      const from=origin.getBoundingClientRect();
+      const initialWidth=document.querySelector('.hero-world').getBoundingClientRect().width/1080*1.5*190;
+      width=mix(initialWidth,routeWidth,handoff);
+      x=mix(from.left+from.width/2,to.x,handoff);
+      footY=mix(from.top+from.height/2,footY,handoff);
+    }
     const h=width*225/190;
-    let x=mix(from.left+from.width/2,to.x,handoff);
-    const footY=mix(from.top+from.height/2,to.y-y,handoff);
-    // Keep the full outline in view, including the bat, on narrow phones.
-    x=clamp(x,width*.245+2,document.documentElement.clientWidth-width*.58-2);
-    const delta=y-lastY;
-    const moving=Math.abs(delta)>.15;
-    const phase=y/22;
-    const step=Math.sin(phase);
-    const front=moving?step*25:0;
-    const lean=moving?clamp((x-lastX)*.35,-7,7):0;
-    guide.style.width=`${width.toFixed(2)}px`;
-    guide.style.height=`${h.toFixed(2)}px`;
+    x=clamp(x,width*.27+3,document.documentElement.clientWidth-width*.59-3);
+    const dy=lastPoint?to.y-lastPoint.y:0;
+    const dx=lastPoint?to.x-lastPoint.x:0;
+    const distance=Math.hypot(dx,dy);
+    const desiredActivity=clamp(distance/Math.max(1,dt*.60));
+    activity=mix(activity,desiredActivity,1-Math.exp(-dt/(desiredActivity>activity?70:110)));
+    if(Math.abs(y-animatedY)<.06&&activity<.015){animatedY=y;activity=0;}
+    phase+=Math.sign(dy)*Math.min(distance,32)/(mobile?26:34);
+    const step=Math.sin(phase), opposite=Math.sin(phase+Math.PI);
+    lean=mix(lean,clamp(dx*.05,-3,3),1-Math.exp(-dt/90));
+    const set=(name,value,unit='deg')=>guide.style.setProperty(name,`${value.toFixed(3)}${unit}`);
+    set('--hip-front',step*24*activity);set('--hip-back',opposite*24*activity);
+    set('--knee-front',Math.max(0,-Math.sin(phase-.6))*37*activity);
+    set('--knee-back',Math.max(0,-Math.sin(phase+Math.PI-.6))*37*activity);
+    set('--ankle-front',Math.sin(phase+.6)*7*activity);set('--ankle-back',Math.sin(phase+Math.PI+.6)*7*activity);
+    set('--walk-bob',-Math.abs(step)*1.8*activity,'px');set('--walk-lean',lean);
+    const armRange=sport==='kho-kho'?14:sport==='cricket'?8:5;
+    set('--carry-arm',handoff<.5?mix(18,-8,clamp(animatedY/Math.max(1,heroTravel))):step*armRange*activity);
+    set('--head-tilt',step*1.2*activity);
+    guide.style.width=`${width.toFixed(2)}px`;guide.style.height=`${h.toFixed(2)}px`;
     guide.style.transform=`translate3d(${(x-width*65/190).toFixed(2)}px,${(footY-h*205/225).toFixed(2)}px,0)`;
-    guide.style.setProperty('--walk-front',`${front.toFixed(1)}deg`);
-    guide.style.setProperty('--walk-back',`${(-front).toFixed(1)}deg`);
-    guide.style.setProperty('--walk-bob',`${(moving?-Math.abs(step)*2:0).toFixed(2)}px`);
-    guide.style.setProperty('--walk-lean',`${lean.toFixed(1)}deg`);
-    guide.style.setProperty('--walk-arm',`${(handoff<.5?mix(36,-30,clamp(y/Math.max(1,heroTravel))):8+step*8).toFixed(1)}deg`);
     guide.dataset.journeyProgress=((to.y-points[0].y)/(points[points.length-1].y-points[0].y)).toFixed(4);
-    guide.classList.add('is-ready');
-    track.classList.toggle('is-visible',handoff>.02);
-    let nearest=stops[0];for(const stop of stops)if(Math.abs(stop.y-to.y)<Math.abs(nearest.y-to.y))nearest=stop;
-    guide.dataset.ground=nearest.id;
-    stopGroup.querySelectorAll('circle').forEach(node=>node.classList.toggle('is-current',node.dataset.ground===nearest.id));
-    lastY=y;lastX=x;
+    guide.dataset.walking=activity>.02?'true':'false';
+    guide.classList.add('is-ready');track.classList.toggle('is-visible',handoff>.02);
+    stopGroup.querySelectorAll('circle').forEach(node=>node.classList.toggle('is-current',node.dataset.ground===active.id));
+    lastPoint=to;
+    // Settle to a planted neutral stance, then release the animation frame loop.
+    if(Math.abs(y-animatedY)>.06||activity>.015){pending=true;requestAnimationFrame(render)}
   }
   function queue(){if(!pending){pending=true;requestAnimationFrame(render)}}
   addEventListener('scroll',queue,{passive:true});
   addEventListener('resize',()=>{dirty=true;queue()},{passive:true});
+  addEventListener('hashchange',()=>{snap=true;queue()});
   addEventListener('load',()=>{dirty=true;queue()},{once:true});
   reduce.addEventListener('change',()=>{dirty=true;queue()});
   if(document.fonts?.ready)document.fonts.ready.then(()=>{dirty=true;queue()});
