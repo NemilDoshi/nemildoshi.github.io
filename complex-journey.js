@@ -34,7 +34,9 @@
       const artTop=mobile?ar.top+viewportY:layout.top+viewportY;
       const zoneTop=zr.top+viewportY;
       const zoneBottom=zr.bottom+viewportY;
-      bounds.push({id:zone.id,top:zoneTop,artTop,artHeight:ar.height});
+      const playStart=artTop+ar.height*.58,playEnd=artTop+ar.height+(mobile?84:34);
+      bounds.push({id:zone.id,top:zoneTop,artTop,artHeight:ar.height,art,playStart,playEnd,dockY:artTop+ar.height*.80});
+      zone.dataset.playStart=playStart.toFixed(1);zone.dataset.playEnd=playEnd.toFixed(1);
       points.push({x:rail,y:zoneTop+105});
       points.push({x:rail,y:artTop+48});
       points.push({x:ar.left+ar.width*.17,y:artTop+ar.height*.48});
@@ -53,7 +55,7 @@
     }
     track.style.height=`${height}px`;
     svg.setAttribute('viewBox',`0 0 ${document.documentElement.clientWidth} ${height}`);
-    svg.querySelectorAll('path').forEach(path=>path.setAttribute('d',d));
+    svg.querySelectorAll('.trail-edge,.trail-paper,.trail-dashes').forEach(path=>path.setAttribute('d',d));
     stopGroup.replaceChildren(...stops.map(stop=>{
       const node=document.createElementNS('http://www.w3.org/2000/svg','circle');
       node.setAttribute('cx',stop.x.toFixed(1));node.setAttribute('cy',stop.y.toFixed(1));
@@ -89,7 +91,18 @@
       animatedY=mix(animatedY,y,1-Math.exp(-dt/64));
     }
     const handoff=smooth((animatedY-heroTravel*.65)/(vh*.80));
-    const to=pointAt(animatedY+vh*.70);
+    const routeY=animatedY+vh*.70;
+    const play=bounds.find(g=>routeY>=g.playStart&&routeY<=g.playEnd);
+    const playProgress=play?clamp((routeY-play.playStart)/(play.playEnd-play.playStart)):0;
+    let pathY=routeY;
+    if(play){
+      if(playProgress<.22)pathY=mix(play.playStart,play.dockY,smooth(playProgress/.22));
+      else if(playProgress<.68)pathY=play.dockY;
+      else pathY=mix(play.dockY,play.playEnd,smooth((playProgress-.68)/.32));
+    }
+    const to=pointAt(pathY);
+    const playWeight=play?smooth(playProgress/.15)*smooth((1-playProgress)/.32):0;
+    const playRect=play?play.art.getBoundingClientRect():null;
     let active=bounds[0];for(const ground of bounds)if(to.y>=ground.top+60)active=ground;
     const sport=handoff<.5?'cricket':active.id;
     if(guide.dataset.sport!==sport)guide.dataset.sport=sport;
@@ -126,10 +139,95 @@
     const armRange=sport==='kho-kho'?14:sport==='cricket'?8:5;
     set('--carry-arm',handoff<.5?mix(18,-8,clamp(animatedY/Math.max(1,heroTravel))):step*armRange*activity);
     set('--head-tilt',step*1.2*activity);
+    const actionSport=play?.id||'';
+    guide.dataset.playing=play?'true':'false';guide.dataset.action=actionSport;
+    guide.dataset.actionProgress=play?playProgress.toFixed(4):'';
+    guide.dataset.pose='walk';guide.dataset.released='false';
+    set('--left-arm',0);set('--play-lift',0,'px');set('--shoot-reach',1,'');
+    track.dataset.effect=actionSport;
+    zones.forEach(zone=>zone.classList.toggle('is-playing',zone.id===actionSport));
+    track.style.setProperty('--projectile-opacity','0');track.style.setProperty('--impact-opacity','0');
+    if(play){
+      const p=playProgress,w=playWeight,unit=width/190;
+      track.style.setProperty('--target-opacity',(smooth(p/.12)*smooth((1-p)/.10)).toFixed(3));
+      const a={left:playRect.left,top:playRect.top+y,width:playRect.width,height:playRect.height};
+      const strike=(back,forward)=>p<.32?mix(0,back,smooth(p/.32)):p<.58?mix(back,forward,smooth((p-.32)/.26)):mix(forward,0,smooth((p-.58)/.30));
+      let front=0,back=0,kneeFront=0,kneeBack=0,arm=0,torso=0,lift=0;
+      if(actionSport==='cricket'){arm=strike(-55,80);front=8*w;back=-8*w;kneeFront=9*w;torso=-5*Math.sin(p*Math.PI);}
+      if(actionSport==='football'){front=strike(-23,66);back=-8*w;kneeFront=22*(1-smooth((p-.3)/.15))*w;arm=-12*w;torso=-7*w;}
+      if(actionSport==='basketball'){
+        const crouch=Math.sin(clamp(p/.42)*Math.PI)*w;
+        kneeFront=25*crouch;kneeBack=25*crouch;front=-10*crouch;back=-10*crouch;
+        lift=-14*Math.sin(clamp((p-.28)/.36)*Math.PI)*w;
+        if(p>.17&&p<.76)guide.dataset.pose='shoot';
+        set('--shoot-reach',.45+.55*smooth((p-.17)/.17),'');
+      }
+      if(actionSport==='tennis'){arm=strike(-43,72);front=12*w;back=-10*w;kneeFront=14*w;torso=-8*Math.sin(p*Math.PI);}
+      if(actionSport==='kho-kho'){
+        const lunge=Math.sin(smooth(clamp((p-.12)/.70))*Math.PI)*w;
+        front=25*lunge;back=-18*lunge;kneeFront=35*lunge;kneeBack=13*lunge;arm=-27*lunge;torso=11*lunge;
+        x+=lunge*Math.min(27,a.width*.08);
+      }
+      if(actionSport==='clubhouse'){set('--left-arm',(85+Math.sin(p*Math.PI*6)*14)*w);torso=-3*w;arm=0;}
+      set('--hip-front',mix(step*24*activity,front,w));set('--hip-back',mix(opposite*24*activity,back,w));
+      set('--knee-front',mix(Math.max(0,-Math.sin(phase-.6))*37*activity,kneeFront,w));
+      set('--knee-back',mix(Math.max(0,-Math.sin(phase+Math.PI-.6))*37*activity,kneeBack,w));
+      set('--ankle-front',Math.sin(phase+.6)*7*activity*(1-w));set('--ankle-back',Math.sin(phase+Math.PI+.6)*7*activity*(1-w));
+      set('--walk-bob',-Math.abs(step)*1.8*activity*(1-w),'px');set('--walk-lean',mix(lean,torso,w));
+      set('--carry-arm',mix(step*armRange*activity,arm,w));set('--play-lift',lift,'px');
+      const foot={x,y:footY+y+lift*unit};
+      const hand={x:x+61*unit,y:foot.y-70*unit};
+      const target={x:a.left+a.width*.83,y:a.top+a.height*.32};
+      const propScale=a.width/600;
+      const targetNode=svg.querySelector(`[data-target="${actionSport}"]`);
+      if(actionSport==='football'){target.x=a.left+a.width*.19;target.y=a.top+a.height*.64;}
+      if(actionSport==='kho-kho'){target.x=a.left+a.width*.87;target.y=a.top+a.height*.65;}
+      if(targetNode)targetNode.setAttribute('transform',`translate(${target.x.toFixed(2)} ${target.y.toFixed(2)}) scale(${propScale.toFixed(4)})`);
+      let projectile=null,opacity=0,impact=0,impactPoint=target;
+      const lerpPoint=(start,end,t,arc=0)=>({x:mix(start.x,end.x,t),y:mix(start.y,end.y,t)-Math.sin(t*Math.PI)*arc});
+      if(actionSport==='basketball'){
+        guide.dataset.released=p>.17&&p<.90?'true':'false';
+        const reach=.45+.55*smooth((p-.17)/.17);
+        const held={x:x+5*unit,y:foot.y+(-100-108*reach)*unit};
+        const release={x:x+5*unit,y:foot.y-208*unit};
+        if(p>.17&&p<.38){projectile=held;opacity=1;}
+        if(p>=.38&&p<.71){projectile=lerpPoint(release,target,clamp((p-.38)/.33),a.height*.22);opacity=1;}
+        if(p>=.71&&p<.88){projectile={x:target.x,y:target.y+smooth((p-.71)/.17)*a.height*.24};opacity=1-smooth((p-.83)/.05);}
+        impact=Math.max(0,1-Math.abs(p-.72)/.045);
+        track.style.setProperty('--net-wobble',`${(p>.70&&p<.88?Math.sin((p-.7)*90)*9*(1-smooth((p-.7)/.18)):0).toFixed(2)}deg`);
+      }
+      if(actionSport==='football'){
+        const feet={x:x-9*unit,y:foot.y-5*unit};
+        if(p>.10&&p<.26){projectile=lerpPoint(hand,feet,smooth((p-.10)/.16));opacity=1;}
+        if(p>=.26&&p<.40){projectile=feet;opacity=1;}
+        if(p>=.40&&p<.78){projectile=lerpPoint(feet,target,smooth((p-.40)/.34),a.height*.12);opacity=1-smooth((p-.73)/.05);}
+        guide.dataset.released=p>.10&&p<.90?'true':'false';impact=Math.max(0,1-Math.abs(p-.75)/.05);
+      }
+      if(actionSport==='cricket'||actionSport==='tennis'){
+        const tennis=actionSport==='tennis';
+        const contact={x:x+(tennis?68:75)*unit,y:foot.y-(tennis?111:85)*unit};
+        const incoming={x:a.left+a.width*.12,y:a.top+a.height*(tennis?.36:.48)};
+        const destination={x:a.left+a.width*(tennis?.17:.90),y:a.top+a.height*.24};
+        if(p>.10&&p<.43){projectile=lerpPoint(incoming,contact,smooth((p-.10)/.33));opacity=1;}
+        if(p>=.43&&p<.83){projectile=lerpPoint(contact,destination,smooth((p-.43)/.34),a.height*.10);opacity=1-smooth((p-.76)/.07);}
+        impactPoint=contact;impact=Math.max(0,1-Math.abs(p-.44)/.04);
+      }
+      if(actionSport==='kho-kho'){impactPoint={x:target.x-12*propScale,y:target.y-57*propScale};impact=Math.max(0,1-Math.abs(p-.51)/.10);}
+      if(actionSport==='clubhouse'){impactPoint={x:x-48*unit,y:foot.y-160*unit};impact=Math.sin(p*Math.PI)*.7;}
+      if(projectile){
+        projectile.x=clamp(projectile.x,a.left+18,a.left+a.width-18);
+        projectile.y=clamp(projectile.y,a.top+22,a.top+a.height-12);
+        track.style.setProperty('--projectile-x',`${projectile.x.toFixed(2)}px`);track.style.setProperty('--projectile-y',`${projectile.y.toFixed(2)}px`);
+        track.style.setProperty('--projectile-scale',(unit*(actionSport==='cricket'||actionSport==='tennis'?.45:.85)).toFixed(4));
+        track.style.setProperty('--projectile-spin',`${(p*650).toFixed(2)}deg`);track.style.setProperty('--projectile-opacity',opacity.toFixed(3));
+      }
+      track.style.setProperty('--impact-x',`${impactPoint.x.toFixed(2)}px`);track.style.setProperty('--impact-y',`${impactPoint.y.toFixed(2)}px`);
+      track.style.setProperty('--impact-scale',(unit*.8).toFixed(4));track.style.setProperty('--impact-opacity',impact.toFixed(3));
+    }
     guide.style.width=`${width.toFixed(2)}px`;guide.style.height=`${h.toFixed(2)}px`;
     guide.style.transform=`translate3d(${(x-width*65/190).toFixed(2)}px,${(footY-h*205/225).toFixed(2)}px,0)`;
     guide.dataset.journeyProgress=((to.y-points[0].y)/(points[points.length-1].y-points[0].y)).toFixed(4);
-    guide.dataset.walking=activity>.02?'true':'false';
+    guide.dataset.walking=activity>.02&&playWeight<.8?'true':'false';
     guide.classList.add('is-ready');track.classList.toggle('is-visible',handoff>.02);
     stopGroup.querySelectorAll('circle').forEach(node=>node.classList.toggle('is-current',node.dataset.ground===active.id));
     lastPoint=to;
