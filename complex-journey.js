@@ -1,52 +1,82 @@
-/* A bounded action clock. Rendering and browser input stay with the journey. */
+/* One continuous camera: approach, complete action, depart and travel. */
 class CourtActionClock {
-  constructor(grounds, viewport) {
-    this.grounds=grounds;this.viewport=viewport;this.completed=new Set();
-    this.active=null;this.pausedAt=null;
+  constructor(grounds, viewport, rate) {
+    this.grounds=grounds;this.viewport=viewport;
+    this.rate=rate||(()=>this.viewport()*.00145);
+    this.completed=new Set();this.active=null;this.pausedAt=null;
     this.durations={cricket:1800,football:1700,basketball:2100,'kho-kho':1650,tennis:1850,clubhouse:1100};
   }
   gate(g){return Math.max(0,g.dockY-this.viewport()*.70)}
   crossing(from,to){
-    if(to<=from)return null;
-    return this.grounds().find(g=>!this.completed.has(g.id)&&this.gate(g)>=from-1&&this.gate(g)<=to+1)||null;
+    if(to<from)return null;
+    return this.grounds().find(g=>!this.completed.has(g.id)&&this.gate(g)>=from-.35&&this.gate(g)<=to+.35)||null;
   }
   begin(id,from,target,now){
     if(this.active)return false;
     const g=this.grounds().find(g=>g.id===id);
     if(!g||this.completed.has(id))return false;
-    this.active={id,from,target,started:now,state:'approach',duration:this.durations[id]||1700,finalFrame:false};
+    this.active={id,position:from,target,velocity:0,lastTick:now,state:'approach',started:now,duration:this.durations[id]||1700,finalFrame:false};
+    return true;
+  }
+  beginTravel(from,target,now){
+    if(this.active)return false;
+    this.active={id:null,position:from,target,velocity:0,lastTick:now,state:'travel',started:now};
     return true;
   }
   push(delta){if(this.active)this.active.target+=delta}
+  move(a,destination,now){
+    const dt=Math.min(34,Math.max(0,now-a.lastTick));a.lastTick=now;
+    const distance=destination-a.position;
+    if(Math.abs(distance)<.35&&Math.abs(a.velocity)<.04){a.position=destination;a.velocity=0;return true}
+    const direction=Math.sign(distance)||1;
+    const maxSpeed=Math.max(.10,Math.min(this.rate(a.position,direction),this.rate(a.position+direction*150,direction)));
+    const acceleration=.0034;
+    const desired=direction*Math.min(maxSpeed,Math.sqrt(2*acceleration*Math.abs(distance)));
+    const before=a.velocity;
+    a.velocity+=Math.max(-acceleration*dt,Math.min(acceleration*dt,desired-a.velocity));
+    const step=(before+a.velocity)*.5*dt;
+    if(Math.sign(step)===direction&&Math.abs(step)>=Math.abs(distance)){a.position=destination;a.velocity=0;return true}
+    a.position+=step;return false;
+  }
+  startPerformance(a,ground,now){
+    a.id=ground.id;a.position=this.gate(ground);a.velocity=0;
+    a.state='playing';a.started=now;a.lastTick=now;a.duration=this.durations[ground.id]||1700;a.finalFrame=false;
+    return {state:'playing',scroll:a.position,velocity:0,started:ground.id,play:{id:ground.id,progress:0}};
+  }
   tick(now){
     const a=this.active;if(!a)return null;
-    const ground=this.grounds().find(g=>g.id===a.id);
-    if(!ground){this.active=null;return null}
-    const hold=this.gate(ground);
     if(a.state==='approach'){
-      const t=Math.min(1,Math.max(0,(now-a.started)/240));
-      const e=t*t*(3-2*t);
-      const scroll=a.from+(hold-a.from)*e;
-      if(t<1)return {state:'approach',scroll,play:null};
-      a.state='playing';a.started=now;
+      const ground=this.grounds().find(g=>g.id===a.id);
+      if(!ground){this.active=null;return null}
+      if(this.move(a,this.gate(ground),now))return this.startPerformance(a,ground,now);
+      return {state:'approach',scroll:a.position,velocity:a.velocity,play:null};
     }
-    const p=Math.min(1,Math.max(0,(now-a.started)/a.duration));
-    if(p>=1&&a.finalFrame){
-      this.completed.add(a.id);this.active=null;
-      return {state:'complete',scroll:hold,resume:a.target,completed:a.id,play:null};
+    if(a.state==='playing'){
+      a.lastTick=now;
+      const p=Math.min(1,Math.max(0,(now-a.started)/a.duration));
+      if(p>=1&&a.finalFrame){
+        this.completed.add(a.id);a.state='travel';a.velocity=0;
+        return {state:'departing',scroll:a.position,velocity:0,completed:a.id,play:null};
+      }
+      if(p>=1)a.finalFrame=true;
+      return {state:'playing',scroll:a.position,velocity:0,play:{id:a.id,progress:p}};
     }
-    if(p>=1)a.finalFrame=true;
-    return {state:'playing',scroll:hold,play:{id:a.id,progress:p}};
+    if(a.target<a.position)this.rearm(a.position);
+    const next=this.crossing(a.position,a.target);
+    const destination=next?this.gate(next):a.target;
+    if(this.move(a,destination,now)){
+      if(next)return this.startPerformance(a,next,now);
+      this.active=null;return {state:'complete',scroll:a.position,velocity:0,play:null};
+    }
+    return {state:'travel',scroll:a.position,velocity:a.velocity,play:null};
   }
   pause(now){if(this.pausedAt===null)this.pausedAt=now}
   resume(now){
-    if(this.active&&this.pausedAt!==null)this.active.started+=Math.max(0,now-this.pausedAt);
+    if(this.active&&this.pausedAt!==null){this.active.started+=Math.max(0,now-this.pausedAt);this.active.lastTick=now}
     this.pausedAt=null;
   }
-  cancel(mark=false){if(mark&&this.active)this.completed.add(this.active.id);this.active=null;this.pausedAt=null}
-  rearm(scroll){
-    for(const g of this.grounds())if(scroll+this.viewport()*.70<g.playStart-this.viewport()*.30)this.completed.delete(g.id);
-  }
+  cancel(mark=false){if(mark&&this.active?.id)this.completed.add(this.active.id);this.active=null;this.pausedAt=null}
+  rearm(scroll){for(const g of this.grounds())if(scroll+this.viewport()*.70<g.playStart-this.viewport()*.30)this.completed.delete(g.id)}
 }
 if(typeof module!=='undefined'&&module.exports)module.exports=CourtActionClock;
 
@@ -67,18 +97,22 @@ if(typeof module!=='undefined'&&module.exports)module.exports=CourtActionClock;
   const mix=(a,b,t)=>a+(b-a)*t;
   let points=[],stops=[],bounds=[],height=0,mobile=false,rail=0,pending=false,dirty=true;
   let heroTravel=0, animatedY=scrollY, lastFrame=0, phase=0, activity=0, lastPoint=null, snap=true, lean=0;
-  const actionClock=new CourtActionClock(()=>bounds,()=>innerHeight);
-  let observedY=scrollY,internalY=null,deferredTarget=null,navigationHash=location.hash;
-  let pendingNavigation=location.hash.slice(1),lastTimedState='',touchY=null;
+  const actionClock=new CourtActionClock(()=>bounds,()=>innerHeight,cameraRate);
+  let observedY=scrollY,internalY=null,navigationHash=location.hash;
+  let pendingNavigation=location.hash.slice(1),touchY=null,previousGuide=null,maximumGuideStep=0,previousCamera=scrollY,maximumCameraStep=0;
   function limitScroll(v){return clamp(v,0,Math.max(0,document.documentElement.scrollHeight-innerHeight))}
-  function applyScroll(v){internalY=limitScroll(v);observedY=internalY;window.scrollTo({top:internalY,behavior:'auto'})}
+  function applyScroll(v){internalY=limitScroll(v);observedY=internalY;maximumCameraStep=Math.max(maximumCameraStep,Math.abs(internalY-previousCamera));previousCamera=internalY;document.documentElement.dataset.maxCameraStep=maximumCameraStep.toFixed(2);window.scrollTo({top:internalY,behavior:'auto'})}
   function beginAction(g,from,target){
     if(!g||reduce.matches||!actionClock.begin(g.id,from,limitScroll(target),performance.now()))return false;
     document.documentElement.classList.add('court-action-hold');
     document.documentElement.dataset.actionLocked='true';
     delete document.documentElement.dataset.lastCompletedAction;
-    const section=document.getElementById(g.id);section.dataset.performanceState='playing';section.dataset.performanceStarted=performance.now().toFixed(1);
+    const section=document.getElementById(g.id);section.dataset.performanceState='approaching';maximumCameraStep=0;maximumGuideStep=0;previousCamera=from;
     applyScroll(from);queue();return true;
+  }
+  function beginTravel(from,target){
+    if(reduce.matches||!actionClock.beginTravel(from,limitScroll(target),performance.now()))return false;
+    document.documentElement.classList.add('court-action-hold');document.documentElement.dataset.actionLocked='true';maximumCameraStep=0;maximumGuideStep=0;previousCamera=from;applyScroll(from);queue();return true;
   }
   function observeScroll(){
     const value=scrollY;
@@ -86,29 +120,28 @@ if(typeof module!=='undefined'&&module.exports)module.exports=CourtActionClock;
     if(location.hash!==navigationHash||pendingNavigation&&bounds.some(g=>g.id===pendingNavigation)){observedY=value;queue();return}
     if(internalY!==null&&Math.abs(value-internalY)<2){internalY=null;observedY=value;queue();return}
     if(actionClock.active){
-      const ground=bounds.find(g=>g.id===actionClock.active.id);
-      const hold=actionClock.gate(ground);
-      actionClock.push(value-hold);applyScroll(hold);queue();return;
+      const current=actionClock.active.position;
+      actionClock.push(value-current);applyScroll(current);queue();return;
     }
     const crossed=actionClock.crossing(observedY,value);
-    if(crossed){beginAction(crossed,observedY,deferredTarget??value);return}
-    observedY=value;actionClock.rearm(value);
-    if(deferredTarget!==null&&Math.abs(value-deferredTarget)<3)deferredTarget=null;
+    if(crossed){beginAction(crossed,observedY,value);return}
+    if(Math.abs(value-observedY)>innerHeight*.08){beginTravel(observedY,value);return}
+    observedY=value;previousCamera=value;actionClock.rearm(value);
     queue();
   }
   function inputScroll(event,delta){
     if(reduce.matches||!Number.isFinite(delta))return;
     if(actionClock.active){if(event.cancelable)event.preventDefault();actionClock.push(delta);queue();return}
-    deferredTarget=null;
     const crossed=actionClock.crossing(scrollY,limitScroll(scrollY+delta));
     if(crossed){if(event.cancelable)event.preventDefault();beginAction(crossed,scrollY,scrollY+delta)}
+    else if(Math.abs(delta)>innerHeight*.08){if(event.cancelable)event.preventDefault();beginTravel(scrollY,scrollY+delta)}
   }
   addEventListener('wheel',e=>{if(e.ctrlKey||Math.abs(e.deltaY)<Math.abs(e.deltaX))return;inputScroll(e,e.deltaY*(e.deltaMode===1?18:e.deltaMode===2?innerHeight:1))},{passive:false});
   addEventListener('touchstart',e=>{touchY=e.touches.length===1?e.touches[0].clientY:null},{passive:true});
   addEventListener('touchmove',e=>{if(e.touches.length!==1||touchY===null)return;const value=e.touches[0].clientY;const delta=touchY-value;touchY=value;inputScroll(e,delta)},{passive:false});
   addEventListener('touchend',()=>{touchY=null},{passive:true});
   addEventListener('keydown',e=>{
-    if(e.key==='Escape'&&actionClock.active){actionClock.cancel(true);deferredTarget=null;observedY=scrollY;document.documentElement.classList.remove('court-action-hold');document.documentElement.dataset.actionLocked='false';snap=true;queue();return}
+    if(e.key==='Escape'&&actionClock.active){actionClock.cancel(true);observedY=scrollY;document.documentElement.classList.remove('court-action-hold');document.documentElement.dataset.actionLocked='false';snap=true;queue();return}
     if(e.target.closest?.('input,textarea,select,button,[contenteditable="true"]'))return;
     const amount={ArrowDown:42,ArrowUp:-42,PageDown:innerHeight*.85,PageUp:-innerHeight*.85,' ':innerHeight*.85,End:document.documentElement.scrollHeight,Home:-document.documentElement.scrollHeight}[e.key];
     if(amount!==undefined)inputScroll(e,e.shiftKey&&e.key===' '?-amount:amount);
@@ -177,6 +210,13 @@ if(typeof module!=='undefined'&&module.exports)module.exports=CourtActionClock;
     const e=t*t*(3-2*t);
     return {x:mix(a.x,b.x,e),y};
   }
+  function cameraRate(cameraY){
+    if(!points.length)return innerHeight*.0013;
+    const center=cameraY+innerHeight*.70;
+    const a=pointAt(center-8),b=pointAt(center+8);
+    const slope=Math.abs((b.x-a.x)/Math.max(1,b.y-a.y));
+    return Math.min(innerHeight*(mobile?.00135:.00155),(mobile?.38:.52)/Math.max(.10,slope));
+  }
   function render(now){
     pending=false;
     if(reduce.matches){actionClock.cancel();document.documentElement.classList.remove('court-action-hold');document.documentElement.dataset.actionLocked='false';guide.classList.remove('is-ready');track.classList.remove('is-visible');lastFrame=0;return}
@@ -189,31 +229,33 @@ if(typeof module!=='undefined'&&module.exports)module.exports=CourtActionClock;
       const arrived=target&&Math.abs(scrollY-target.top)<innerHeight*.60;
       if(arrived){
         for(const g of bounds){if(g.id===target.id)break;actionClock.completed.add(g.id)}
-        observedY=scrollY;
+        observedY=scrollY;previousGuide=null;
         const gate=actionClock.gate(target);
         if(scrollY>=gate-innerHeight*.25&&scrollY<=target.playEnd-innerHeight*.45)beginAction(target,scrollY,scrollY);
       }
       if(!target||arrived)pendingNavigation='';
     }
-    let timed=actionClock.tick(now);
+    if(actionClock.active)actionClock.active.target=limitScroll(actionClock.active.target);
+    const timed=actionClock.tick(now);
     if(timed){
       applyScroll(timed.scroll);
-      if(timed.state==='playing'&&lastTimedState!=='playing')snap=true;
-      if(timed.state==='complete'){
+      document.documentElement.dataset.motionState=timed.state;
+      if(timed.started){
+        const started=document.getElementById(timed.started);started.dataset.performanceState='playing';started.dataset.performanceStarted=now.toFixed(1);
+        delete document.documentElement.dataset.lastCompletedAction;
+      }
+      if(timed.completed){
         document.documentElement.dataset.lastCompletedAction=timed.completed;
         const finished=document.getElementById(timed.completed);finished.dataset.performanceState='complete';finished.dataset.performanceEnded=now.toFixed(1);
-        document.documentElement.dataset.actionLocked='false';
-        document.documentElement.classList.remove('court-action-hold');
-        deferredTarget=limitScroll(timed.resume);
-        if(Math.abs(deferredTarget-scrollY)>2){const destination=deferredTarget;requestAnimationFrame(()=>window.scrollTo({top:destination,behavior:'smooth'}))}
       }
-      lastTimedState=timed.state;
-    }else lastTimedState='';
+      if(timed.state==='complete'){
+        document.documentElement.dataset.actionLocked='false';document.documentElement.classList.remove('court-action-hold');
+      }
+    }
     const y=scrollY,vh=innerHeight;
     if(snap){animatedY=y;snap=false;activity=0;lastPoint=null;}
     else {
       // Time-based damping absorbs coarse touch events without intercepting native scrolling.
-      animatedY=clamp(animatedY,y-vh*.22,y+vh*.22);
       animatedY=mix(animatedY,y,1-Math.exp(-dt/64));
     }
     const handoff=smooth((animatedY-heroTravel*.65)/(vh*.80));
@@ -350,6 +392,8 @@ if(typeof module!=='undefined'&&module.exports)module.exports=CourtActionClock;
       track.style.setProperty('--impact-x',`${impactPoint.x.toFixed(2)}px`);track.style.setProperty('--impact-y',`${impactPoint.y.toFixed(2)}px`);
       track.style.setProperty('--impact-scale',(unit*.8).toFixed(4));track.style.setProperty('--impact-opacity',impact.toFixed(3));
     }
+    if(previousGuide&&actionClock.active){maximumGuideStep=Math.max(maximumGuideStep,Math.hypot(x-previousGuide.x,footY-previousGuide.y));document.documentElement.dataset.maxGuideStep=maximumGuideStep.toFixed(2)}
+    previousGuide={x,y:footY};
     guide.style.width=`${width.toFixed(2)}px`;guide.style.height=`${h.toFixed(2)}px`;
     guide.style.transform=`translate3d(${(x-width*65/190).toFixed(2)}px,${(footY-h*205/225).toFixed(2)}px,0)`;
     guide.dataset.journeyProgress=((to.y-points[0].y)/(points[points.length-1].y-points[0].y)).toFixed(4);
@@ -362,8 +406,8 @@ if(typeof module!=='undefined'&&module.exports)module.exports=CourtActionClock;
   }
   function queue(){if(!pending){pending=true;requestAnimationFrame(render)}}
   addEventListener('scroll',observeScroll,{passive:true});
-  addEventListener('resize',()=>{dirty=true;queue()},{passive:true});
-  addEventListener('hashchange',()=>{actionClock.cancel();document.documentElement.classList.remove('court-action-hold');document.documentElement.dataset.actionLocked='false';navigationHash=location.hash;pendingNavigation=location.hash.slice(1);deferredTarget=null;observedY=scrollY;snap=true;queue()});
+  addEventListener('resize',()=>{dirty=true;previousGuide=null;queue()},{passive:true});
+  addEventListener('hashchange',()=>{actionClock.cancel();document.documentElement.classList.remove('court-action-hold');document.documentElement.dataset.actionLocked='false';navigationHash=location.hash;pendingNavigation=location.hash.slice(1);observedY=scrollY;previousGuide=null;snap=true;queue()});
   addEventListener('load',()=>{dirty=true;queue()},{once:true});
   reduce.addEventListener('change',()=>{dirty=true;queue()});
   if(document.fonts?.ready)document.fonts.ready.then(()=>{dirty=true;queue()});
