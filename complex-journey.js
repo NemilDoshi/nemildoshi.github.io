@@ -103,6 +103,9 @@ if(typeof module!=='undefined'&&module.exports)module.exports=CourtActionClock;
   const zones=[...document.querySelectorAll('.zone')];
   const reduce=matchMedia('(prefers-reduced-motion: reduce)');
   if(!guide||!origin||!svg)return;
+  const cometPaths=[...svg.querySelectorAll('.comet-tail')];
+  const comicClip=svg.querySelector('#comic-court-bounds');
+  let flightHistory=[],flightSport='';
   const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
   const smooth=t=>{t=clamp(t);return t*t*(3-2*t)};
   const mix=(a,b,t)=>a+(b-a)*t;
@@ -320,15 +323,53 @@ if(typeof module!=='undefined'&&module.exports)module.exports=CourtActionClock;
     const actionSport=play?.id||'';
     guide.dataset.playing=play?'true':'false';guide.dataset.action=actionSport;
     guide.dataset.actionProgress=play?playProgress.toFixed(4):'';
+    guide.dataset.celebrating=play&&playProgress>.78&&playProgress<.98?'true':'false';
+    set('--dust-opacity',Math.abs(Math.sin(phase*2))*activity*.55,'');
+    set('--dust-scale',.6+Math.abs(Math.sin(phase))*activity*.7,'');
     guide.dataset.pose='walk';guide.dataset.released='false';
     set('--left-arm',0);set('--play-lift',0,'px');set('--shoot-reach',1,'');set('--wrist-flick',0);
     track.dataset.effect=actionSport;
     zones.forEach(zone=>zone.classList.toggle('is-playing',zone.id===actionSport));
     track.style.setProperty('--projectile-opacity','0');track.style.setProperty('--impact-opacity','0');
+    track.style.setProperty('--comet-opacity','0');track.style.setProperty('--shock-opacity','0');
+    if(!play){flightHistory=[];flightSport='';}
     if(play){
       const p=playProgress,w=playWeight,unit=width/190;
       track.style.setProperty('--target-opacity',(smooth(p/.12)*smooth((1-p)/.10)).toFixed(3));
       const a={left:playRect.left,top:playRect.top+y,width:playRect.width,height:playRect.height};
+      // A court becomes a tiny comic panel: load, action, cheer, then a keepsake stamp.
+      const scene=play.art;
+      const payoff=smooth((p-.69)/.18);
+      const pop=Math.sin(clamp((p-.69)/.18)*Math.PI);
+      const cheer=payoff*(1-smooth((p-.96)/.04));
+      const sceneVars={
+        '--comic-aura':(Math.sin(p*Math.PI)*.42+payoff*.22).toFixed(3),
+        '--comic-aura-scale':(.88+.16*smooth(p/.65)).toFixed(3),
+        '--comic-payoff':payoff.toFixed(3),
+        '--stamp-scale':(.65+.35*payoff+.10*pop).toFixed(3),
+        '--stamp-y':`${(14*(1-payoff)-7*pop).toFixed(2)}px`,
+        '--fan-left':`${(72*cheer).toFixed(2)}deg`,
+        '--fan-right':`${(-72*cheer).toFixed(2)}deg`,
+        '--fan-hop':`${(-Math.abs(Math.sin((p-.66)*Math.PI*5))*11*cheer).toFixed(2)}px`,
+        '--fan-hop-two':`${(-Math.abs(Math.cos((p-.66)*Math.PI*5))*7*cheer).toFixed(2)}px`,
+        '--score-opacity':(.5+.5*payoff).toFixed(3),
+        '--score-flip':payoff.toFixed(3),
+        '--confetti-opacity':(payoff*smooth((1-p)/.15)).toFixed(3),
+        '--chip-fall':`${(70*smooth((p-.65)/.35)).toFixed(2)}px`,
+        '--chip-turn':`${(p*210).toFixed(2)}deg`,
+      };
+      for(const [key,value] of Object.entries(sceneVars))scene.style.setProperty(key,value);
+      scene.dataset.comicBeat=p<.28?'anticipation':p<.69?'action':'celebration';
+      if(actionSport==='clubhouse'){
+        const fly=smooth((p-.20)/.70);
+        scene.style.setProperty('--plane-x',`${(360-220*fly).toFixed(2)}px`);
+        scene.style.setProperty('--plane-y',`${(290-190*fly-90*Math.sin(fly*Math.PI)).toFixed(2)}px`);
+        scene.style.setProperty('--plane-rotate',`${(-25+40*fly).toFixed(2)}deg`);
+        scene.style.setProperty('--plane-opacity',(smooth((p-.20)/.10)*smooth((.96-p)/.08)).toFixed(3));
+      }
+      if(comicClip){
+        for(const [key,value] of Object.entries({x:a.left+8,y:a.top+4,width:a.width-16,height:a.height-8}))comicClip.setAttribute(key,value.toFixed(2));
+      }
       const strike=(back,contact,follow=contact)=>p<.28?mix(0,back,smooth(p/.28)):p<.45?mix(back,contact,clamp((p-.28)/.17)**2):p<.63?mix(contact,follow,1-(1-clamp((p-.45)/.18))**2):mix(follow,0,smooth((p-.63)/.31));
       let front=0,back=0,kneeFront=0,kneeBack=0,arm=0,torso=0,lift=0;
       if(actionSport==='cricket'){arm=strike(-58,54,82);front=10*w;back=-9*w;kneeFront=12*w;torso=strike(-8,6,10);}
@@ -348,6 +389,11 @@ if(typeof module!=='undefined'&&module.exports)module.exports=CourtActionClock;
         x+=lunge*Math.min(27,a.width*.08);
       }
       if(actionSport==='clubhouse'){set('--left-arm',(85+Math.sin(p*Math.PI*6)*14)*w);torso=-3*w;arm=0;}
+      if(actionSport!=='clubhouse'){
+        const victory=smooth((p-.80)/.08)*smooth((1-p)/.10);
+        set('--left-arm',mix(actionSport==='football'?-12*w:0,88,victory));
+        set('--head-tilt',-5*victory);
+      }
       set('--hip-front',mix(step*24*activity,front,w));set('--hip-back',mix(opposite*24*activity,back,w));
       set('--knee-front',mix(Math.max(0,-Math.sin(phase-.6))*37*activity,kneeFront,w));
       set('--knee-back',mix(Math.max(0,-Math.sin(phase+Math.PI-.6))*37*activity,kneeBack,w));
@@ -403,9 +449,20 @@ if(typeof module!=='undefined'&&module.exports)module.exports=CourtActionClock;
         const ballSize=actionSport==='basketball'?mix(.85,.50,smooth((p-.42)/.33)):actionSport==='football'?mix(.85,.42,smooth((p-.44)/.34)):.36;
         track.style.setProperty('--projectile-scale',(unit*ballSize).toFixed(4));
         track.style.setProperty('--projectile-spin',`${(p*650).toFixed(2)}deg`);track.style.setProperty('--projectile-opacity',opacity.toFixed(3));
+        if(flightSport!==actionSport||flightHistory.length&&p<flightHistory[flightHistory.length-1].p){flightHistory=[];flightSport=actionSport;}
+        flightHistory.push({x:projectile.x,y:projectile.y,p});
+        flightHistory=flightHistory.filter(point=>p-point.p<.12).slice(-12);
+        const ribbon=flightHistory.map((point,i)=>`${i?'L':'M'}${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' ');
+        cometPaths.forEach(path=>path.setAttribute('d',ribbon));
+        track.style.setProperty('--comet-color',actionSport==='tennis'?'#e8f86c':actionSport==='basketball'?'#ff9977':'#ffcf54');
+        track.style.setProperty('--comet-opacity',(opacity*.85).toFixed(3));
+        track.style.setProperty('--comet-width',`${Math.max(5,unit*14).toFixed(2)}px`);
+        track.style.setProperty('--comet-core',`${Math.max(2,unit*4).toFixed(2)}px`);
       }
       track.style.setProperty('--impact-x',`${impactPoint.x.toFixed(2)}px`);track.style.setProperty('--impact-y',`${impactPoint.y.toFixed(2)}px`);
       track.style.setProperty('--impact-scale',(unit*.8).toFixed(4));track.style.setProperty('--impact-opacity',impact.toFixed(3));
+      track.style.setProperty('--shock-opacity',(impact*.75).toFixed(3));
+      track.style.setProperty('--shock-scale',(unit*(1+(1-impact)*2)).toFixed(4));
     }
     if(previousGuide&&actionClock.active){const delta=Math.hypot(x-previousGuide.x,footY-previousGuide.y);if(delta>maximumGuideStep){maximumGuideStep=delta;document.documentElement.dataset.maxGuideStepAt=JSON.stringify({state:timed?.state,ground:active.id,from:previousGuide,to:{x,y:footY}})}document.documentElement.dataset.maxGuideStep=maximumGuideStep.toFixed(2)}
     previousGuide={x,y:footY};
