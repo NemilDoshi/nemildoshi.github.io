@@ -83,7 +83,7 @@ if(typeof module!=='undefined'&&module.exports)module.exports=CourtActionClock;
   function observeScroll(){
     const value=scrollY;
     if(reduce.matches){observedY=value;queue();return}
-    if(location.hash!==navigationHash){observedY=value;queue();return}
+    if(location.hash!==navigationHash||pendingNavigation&&bounds.some(g=>g.id===pendingNavigation)){observedY=value;queue();return}
     if(internalY!==null&&Math.abs(value-internalY)<2){internalY=null;observedY=value;queue();return}
     if(actionClock.active){
       const ground=bounds.find(g=>g.id===actionClock.active.id);
@@ -184,12 +184,16 @@ if(typeof module!=='undefined'&&module.exports)module.exports=CourtActionClock;
     if(dirty){measure();snap=true;lastPoint=null;}
     if(pendingNavigation){
       const target=bounds.find(g=>g.id===pendingNavigation);
-      if(target){
+      // Browser fragment positioning may occur after the first layout/font frame.
+      // Let that intentional navigation reach its destination before enabling gates.
+      const arrived=target&&Math.abs(scrollY-target.top)<innerHeight*.60;
+      if(arrived){
         for(const g of bounds){if(g.id===target.id)break;actionClock.completed.add(g.id)}
+        observedY=scrollY;
         const gate=actionClock.gate(target);
         if(scrollY>=gate-innerHeight*.25&&scrollY<=target.playEnd-innerHeight*.45)beginAction(target,scrollY,scrollY);
       }
-      pendingNavigation='';
+      if(!target||arrived)pendingNavigation='';
     }
     let timed=actionClock.tick(now);
     if(timed){
