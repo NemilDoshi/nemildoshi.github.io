@@ -188,7 +188,7 @@ if(typeof module!=='undefined'&&module.exports)module.exports=PerformanceClock;
     set('--dust-opacity',Math.abs(Math.sin(phase*2))*activity*.55,'');
     set('--dust-scale',.6+Math.abs(Math.sin(phase))*activity*.7,'');
     guide.dataset.pose='walk';guide.dataset.released='false';
-    set('--left-arm',0);set('--play-lift',0,'px');set('--shoot-reach',1,'');set('--wrist-flick',0);
+    set('--left-arm',0);set('--play-lift',0,'px');set('--shoot-reach',1,'');set('--shoot-opacity',0,'');set('--wrist-flick',0);
     track.dataset.effect=actionSport;
     zones.forEach(zone=>zone.classList.toggle('is-playing',zone.id===actionSport));
     track.style.setProperty('--projectile-opacity','0');track.style.setProperty('--impact-opacity','0');
@@ -239,9 +239,10 @@ if(typeof module!=='undefined'&&module.exports)module.exports=PerformanceClock;
         const crouch=Math.sin(clamp(p/.42)*Math.PI)*w;
         kneeFront=25*crouch;kneeBack=25*crouch;front=-10*crouch;back=-10*crouch;
         lift=-17*Math.sin(clamp((p-.28)/.37)*Math.PI)*w;
-        if(p>.17&&p<.87)guide.dataset.pose='shoot';
+        if(p>.14&&p<.96)guide.dataset.pose='shoot';
+        set('--shoot-opacity',smooth((p-.14)/.10)*smooth((.96-p)/.12),'');
         set('--wrist-flick',28*smooth((p-.40)/.10)*smooth((.95-p)/.10));
-        set('--shoot-reach',.45+.55*smooth((p-.17)/.17),'');
+        set('--shoot-reach',smooth((p-.14)/.20),'');
       }
       if(actionSport==='tennis'){arm=strike(-48,50,74);front=14*w;back=-11*w;kneeFront=16*w;kneeBack=8*w;torso=strike(-10,8,12);}
       if(actionSport==='kho-kho'){
@@ -275,11 +276,12 @@ if(typeof module!=='undefined'&&module.exports)module.exports=PerformanceClock;
       const lerpPoint=(start,end,t,arc=0)=>({x:mix(start.x,end.x,t),y:mix(start.y,end.y,t)-4*t*(1-t)*arc});
       const boundedArc=(start,end,arc,minY)=>{for(let i=1;i<12;i++){const t=i/12;arc=Math.min(arc,(mix(start.y,end.y,t)-minY)/(4*t*(1-t)))}return Math.max(0,arc)};
       if(actionSport==='basketball'){
-        guide.dataset.released=p>.17&&p<.90?'true':'false';
-        const reach=.45+.55*smooth((p-.17)/.17);
+        guide.dataset.released=p>.10&&p<.93?'true':'false';
+        const reach=smooth((p-.14)/.20);
         const held={x:x+5*unit,y:foot.y+(-100-108*reach)*unit};
         const release={x:x+5*unit,y:footY+y-224*unit};
-        if(p>.17&&p<.42){projectile=held;opacity=1;}
+        if(p>.10&&p<.14){projectile=lerpPoint(hand,{x:x+5*unit,y:foot.y-100*unit},smooth((p-.10)/.04));opacity=1;}
+        if(p>=.14&&p<.42){projectile=held;opacity=1;}
         if(p>=.42&&p<.75){
           shotOrigin??=release;
           projectile=lerpPoint(shotOrigin,target,clamp((p-.42)/.33),boundedArc(shotOrigin,target,a.height*.43,a.top+14));opacity=1;
