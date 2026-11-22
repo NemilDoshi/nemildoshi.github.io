@@ -55,3 +55,8 @@ html.court-action-hold{scroll-behavior:auto!important}.shoot-fingers{transform:r
 html{scroll-behavior:auto}.court-graphic>svg{overflow:hidden}
 .journey-track[data-effect="cricket"] [data-target="cricket"],.journey-track[data-effect="football"] [data-target="goalkeeper"]{display:inline}
 .play-keeper{transform:translateX(var(--keeper-x,0px)) rotate(var(--keeper-dive,0deg));transform-origin:0 10px}
+/* Blend the gather and shooting arms instead of replacing them in one frame. */
+.journey-guide[data-pose="shoot"] .shooting-arms{opacity:var(--shoot-opacity,1)}
+.journey-guide[data-pose="shoot"] .gait-left-arm,.journey-guide[data-pose="shoot"] .gait-right-arm{visibility:visible;opacity:calc(1 - var(--shoot-opacity,1))}
+.comic-stamp{transform:translateY(calc(8px + var(--stamp-y,14px))) rotate(-2deg) scale(var(--stamp-scale,.65))}
+.zone[data-performance-state="complete"] .comic-stamp{transform:translateY(8px) rotate(-2deg) scale(1)}
