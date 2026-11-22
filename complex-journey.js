@@ -4,8 +4,12 @@ class PerformanceClock {
     this.active=null;this.completed=new Set();this.pausedAt=null;
     this.durations={cricket:3000,football:2800,basketball:3000,'kho-kho':2100,tennis:2300,clubhouse:1700};
   }
-  tick(now,visibleId){
+  tick(now,visibleId,nearbyIds=visibleId?[visibleId]:[]){
     if(this.pausedAt!==null)return null;
+    // Rearm only after leaving the wider court area, so a small boundary wobble
+    // never loops a finished action. Returning from either direction can replay.
+    const nearby=new Set(nearbyIds);
+    for(const id of this.completed)if(!nearby.has(id))this.completed.delete(id);
     // Visitors can leave any court immediately, even halfway through an action.
     if(this.active&&this.active.id!==visibleId)this.active=null;
     if(!this.active){
@@ -127,7 +131,8 @@ if(typeof module!=='undefined'&&module.exports)module.exports=PerformanceClock;
     const handoff=smooth((animatedY-heroTravel*.65)/(vh*.80));
     const routeY=animatedY+vh*.70;
     const candidate=bounds.find(g=>routeY>g.artTop+g.artHeight*.70&&routeY<g.artTop+g.artHeight*.98&&g.artTop-y<vh&&g.artTop+g.artHeight-y>100);
-    const timed=actionClock.tick(now,candidate?.id||null);
+    const nearby=bounds.filter(g=>routeY>g.artTop+g.artHeight*.35&&routeY<g.artTop+g.artHeight*1.30).map(g=>g.id);
+    const timed=actionClock.tick(now,candidate?.id||null,nearby);
     document.documentElement.dataset.motionState=timed?.play?'playing':'native';
     if(timed?.started){shotOrigin=null;const zone=document.getElementById(timed.started);zone.dataset.performanceState='playing';zone.dataset.performanceStarted=now.toFixed(1);}
     if(timed?.completed){const zone=document.getElementById(timed.completed);zone.dataset.performanceState='complete';zone.dataset.performanceEnded=now.toFixed(1);}
